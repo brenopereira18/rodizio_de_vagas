@@ -1,0 +1,12 @@
+package com.rodizio_de_vagas.rodizioDeVagas.modules.work.entity;
+
+public enum WorkStatus {
+    OPEN("Aberta"),
+    CLOSED("Encerrada");
+
+    private String workStatus;
+
+    WorkStatus(String workStatus) {
+        this.workStatus = workStatus;
+    }
+}
