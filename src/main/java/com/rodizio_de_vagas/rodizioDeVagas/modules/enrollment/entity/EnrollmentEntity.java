@@ -20,13 +20,13 @@ public class EnrollmentEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @ManyToOne
     private WorkEntity workEntity;
 
+    @ManyToOne
     private UserEntity userEntity;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status_da_inscricao")
     private SubscriptionStatus subscriptionStatus = SubscriptionStatus.WAITING;
-
-    private Duration responseLimit = Duration.ofHours(2);
 }
