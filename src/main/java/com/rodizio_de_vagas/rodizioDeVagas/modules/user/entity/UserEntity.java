@@ -38,5 +38,6 @@ public class UserEntity {
     private String phoneNumber;
 
     @Enumerated(EnumType.STRING)
-    private UserRole userRole = UserRole.TAX;
+    @Column(name = "funcao")
+    private UserRole userRole = UserRole.FISCAL;
 }
