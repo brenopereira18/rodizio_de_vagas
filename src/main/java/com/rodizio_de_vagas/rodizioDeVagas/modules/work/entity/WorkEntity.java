@@ -37,7 +37,7 @@ public class WorkEntity {
     @Column(name = "data_limite_de_inscricao", nullable = false)
     @Future()
     @NotNull
-    private LocalDateTime registrationLimit = serviceDate.minusDays(1);
+    private LocalDateTime registrationLimit;
 
     @Enumerated(EnumType.STRING)
     @NotNull
