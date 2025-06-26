@@ -1,5 +1,6 @@
 package com.rodizio_de_vagas.rodizioDeVagas.modules.work.entity;
 
+import com.rodizio_de_vagas.rodizioDeVagas.modules.user.entity.UserEntity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.NotBlank;
@@ -33,6 +34,10 @@ public class WorkEntity {
     @Future(message = "A data do serviço ainda não pode ter ocorrido")
     @NotNull
     private LocalDateTime serviceDate;
+
+    @ManyToOne
+    @JoinColumn(name = "supervisor_id")
+    private UserEntity manager;
 
     @Column(name = "data_limite_de_inscricao", nullable = false)
     @Future()

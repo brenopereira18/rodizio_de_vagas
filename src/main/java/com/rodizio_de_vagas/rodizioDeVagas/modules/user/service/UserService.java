@@ -5,9 +5,12 @@ import com.rodizio_de_vagas.rodizioDeVagas.exceptions.ResourceNotFoundException;
 import com.rodizio_de_vagas.rodizioDeVagas.modules.user.entity.UserEntity;
 import com.rodizio_de_vagas.rodizioDeVagas.modules.user.entity.dto.RequestCreateUserDTO;
 import com.rodizio_de_vagas.rodizioDeVagas.modules.user.entity.dto.RequestUpdateUserDTO;
+import com.rodizio_de_vagas.rodizioDeVagas.modules.user.entity.dto.ResponseManagerDTO;
 import com.rodizio_de_vagas.rodizioDeVagas.modules.user.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 public class UserService {
@@ -32,6 +35,14 @@ public class UserService {
      public UserEntity getUser(String registration) {
         return this.userRepository.findByRegistration(registration).orElseThrow(() ->
             new ResourceNotFoundException("Fiscal não encontrado."));
+     }
+
+     public List<ResponseManagerDTO> getAllManagers() {
+        List<UserEntity> managers = this.userRepository.findByUserRole("SUPERVISOR");
+
+        return managers.stream().map(
+            s -> new ResponseManagerDTO(s.getId(), s.getFullName())
+        ).toList();
      }
 
      public UserEntity updateUser(String registration, RequestUpdateUserDTO dto) {

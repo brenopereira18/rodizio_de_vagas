@@ -3,11 +3,14 @@ package com.rodizio_de_vagas.rodizioDeVagas.modules.user.controller;
 import com.rodizio_de_vagas.rodizioDeVagas.modules.user.entity.UserEntity;
 import com.rodizio_de_vagas.rodizioDeVagas.modules.user.entity.dto.RequestCreateUserDTO;
 import com.rodizio_de_vagas.rodizioDeVagas.modules.user.entity.dto.RequestUpdateUserDTO;
+import com.rodizio_de_vagas.rodizioDeVagas.modules.user.entity.dto.ResponseManagerDTO;
 import com.rodizio_de_vagas.rodizioDeVagas.modules.user.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/user")
@@ -26,6 +29,12 @@ public class UserController {
     public ResponseEntity<UserEntity> getUser(@PathVariable String registration) {
         UserEntity user = this.userService.getUser(registration);
         return ResponseEntity.ok().body(user);
+    }
+
+    @GetMapping
+    public ResponseEntity<List<ResponseManagerDTO>> getAllManagers() {
+        List<ResponseManagerDTO> managers = this.userService.getAllManagers();
+        return ResponseEntity.ok(managers);
     }
 
     @PutMapping("/{registration}/profile")
