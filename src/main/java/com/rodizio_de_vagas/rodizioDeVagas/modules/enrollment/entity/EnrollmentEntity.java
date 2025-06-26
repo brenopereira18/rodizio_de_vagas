@@ -21,9 +21,11 @@ public class EnrollmentEntity {
     private Long id;
 
     @ManyToOne
+    @JoinColumn(name = "servico_id")
     private WorkEntity workEntity;
 
     @ManyToOne
+    @JoinColumn(name = "fiscal_id")
     private UserEntity userEntity;
 
     @Enumerated(EnumType.STRING)
