@@ -5,6 +5,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -13,6 +14,7 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
+@Builder
 public class UserEntity {
 
     @Id
@@ -39,5 +41,5 @@ public class UserEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "funcao")
-    private UserRole userRole = UserRole.FISCAL;
+    private UserRole userRole;
 }
