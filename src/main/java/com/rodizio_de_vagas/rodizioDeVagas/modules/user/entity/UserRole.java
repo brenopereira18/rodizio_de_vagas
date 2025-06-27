@@ -1,8 +1,9 @@
 package com.rodizio_de_vagas.rodizioDeVagas.modules.user.entity;
 
 public enum UserRole {
-    ADMIN("Administrador"),
-    FISCAL("Fiscal");
+    ADMINISTRADOR("Administrador"),
+    FISCAL("Fiscal"),
+    SUPERVISOR("Supervisor");
 
     private String userRole;
 
