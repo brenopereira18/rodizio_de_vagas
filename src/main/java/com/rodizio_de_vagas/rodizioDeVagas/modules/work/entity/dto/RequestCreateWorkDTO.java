@@ -9,7 +9,7 @@ public record RequestCreateWorkDTO(
     String title,
     String location,
     LocalDateTime serviceDate,
-    UserEntity manager,
+    Long managerId,
     Category category,
     Integer numberOfVacancies
 ) {}
