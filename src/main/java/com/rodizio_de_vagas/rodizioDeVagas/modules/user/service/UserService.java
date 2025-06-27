@@ -24,11 +24,13 @@ public class UserService {
                 throw new EntityAlreadyExistsException("Fiscal já cadastrado.");
             });
 
-        UserEntity user = new UserEntity();
-        user.setFullName(userDTO.fullName());
-        user.setRegistration(userDTO.registration());
-        user.setPhoneNumber(userDTO.phoneNumber());
-        user.setPassword(user.getRegistration());
+        UserEntity user = UserEntity.builder()
+            .fullName(userDTO.fullName())
+            .registration(userDTO.registration())
+            .phoneNumber(userDTO.phoneNumber())
+            .password(userDTO.registration())
+            .userRole(userDTO.userRole())
+            .build();
         return this.userRepository.save(user);
     }
 
@@ -51,7 +53,6 @@ public class UserService {
 
         user.setPhoneNumber(dto.phoneNumber());
         user.setPassword(dto.password());
-
         return this.userRepository.save(user);
      }
 

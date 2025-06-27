@@ -6,6 +6,7 @@ import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -16,6 +17,7 @@ import java.time.LocalDateTime;
 @Table(name = "servico")
 @AllArgsConstructor
 @NoArgsConstructor
+@Builder
 public class WorkEntity {
 
     @Id
@@ -56,5 +58,6 @@ public class WorkEntity {
     @Enumerated(EnumType.STRING)
     @NotNull
     @Column(name = "status_do_servico", nullable = false)
+    @Builder.Default
     private WorkStatus workStatus = WorkStatus.OPEN;
 }
