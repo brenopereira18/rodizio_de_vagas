@@ -10,7 +10,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "fila_de_prioridade")
+@Table(name = "fila_de_prioridade", uniqueConstraints = {@UniqueConstraint(columnNames = {"categoria", "posicao_na_fila"})})
 @Data
 @Builder
 @AllArgsConstructor
