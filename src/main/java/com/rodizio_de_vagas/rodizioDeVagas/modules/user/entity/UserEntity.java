@@ -27,6 +27,7 @@ public class UserEntity {
 
     @Column(name = "matricula", nullable = false, unique = true)
     @NotBlank
+    @Pattern(regexp = "\\d{5}-\\d", message = "A matrícula deve estar no formato 00000-0")
     private String registration;
 
     @Column(name = "senha", nullable = false)

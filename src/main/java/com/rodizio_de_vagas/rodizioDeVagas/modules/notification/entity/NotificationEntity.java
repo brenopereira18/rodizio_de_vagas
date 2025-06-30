@@ -38,6 +38,7 @@ public class NotificationEntity {
     @Column(name = "data_de_envio")
     private LocalDateTime shippingDate;
 
+    @Column(name = "prazo_de_resposta", nullable = false)
     private LocalDateTime responseDeadline;
 
     @Column(name = "link_do_trabalho", nullable = false)
