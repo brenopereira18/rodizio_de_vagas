@@ -15,7 +15,7 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class JobCategoryPreference {
+public class JobCategoryPreferenceEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
