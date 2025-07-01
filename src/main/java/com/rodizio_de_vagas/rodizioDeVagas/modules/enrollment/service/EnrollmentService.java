@@ -63,21 +63,32 @@ public class EnrollmentService {
         LocalDate startDate = LocalDate.of(year, month, 1);
         LocalDate endDate = startDate.withDayOfMonth(startDate.lengthOfMonth());
 
-        List<EnrollmentEntity> enrollments = this.enrollmentRepository.findByWorkEntityServiceDateBetween(startDate.atStartOfDay(), endDate.atTime(LocalTime.MAX));
+        List<EnrollmentEntity> enrollments = this.enrollmentRepository.findConfirmedEnrollmentsByMonth(startDate.atStartOfDay(), endDate.atTime(LocalTime.MAX));
 
         // Agrupa as inscrições por título do serviço e mapeia as informações fiscais de cada inscrito
-        Map<String, List<ResponseTaxInfosDTO>> grouped = enrollments.stream()
+        Map<WorkEntity, List<ResponseTaxInfosDTO>> grouped = enrollments.stream()
             .collect(Collectors.groupingBy(
-                enrollment -> enrollment.getWorkEntity().getTitle(),
+                EnrollmentEntity::getWorkEntity,
                 Collectors.mapping(
-                    enrollment -> new ResponseTaxInfosDTO(enrollment.getUserEntity().getFullName(), enrollment.getSubscriptionStatus()),
+                    e -> new ResponseTaxInfosDTO(e.getUserEntity().getFullName(), e.getSubscriptionStatus()),
                     Collectors.toList()
                 )
             ));
 
         // Constrói a lista de resposta formatada para retornar os grupos com os respectivos inscritos
         return grouped.entrySet().stream()
-            .map(entry -> new ResponseWorkWithTaxDTO(entry.getKey(), entry.getValue())).collect(Collectors.toList());
+            .map(entry -> {
+                WorkEntity work = entry.getKey();
+                return new ResponseWorkWithTaxDTO(
+                    work.getTitle(),
+                    work.getLocation(),
+                    work.getServiceDate(),
+                    work.getManager(),
+                    work.getCategory(),
+                    entry.getValue()
+                );
+            })
+            .collect(Collectors.toList());
     }
 
     public void cancelEnrollment(Long enrollmentId) {
