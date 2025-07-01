@@ -1,6 +1,7 @@
 package com.rodizio_de_vagas.rodizioDeVagas.modules.user.repository;
 
 import com.rodizio_de_vagas.rodizioDeVagas.modules.user.entity.UserEntity;
+import com.rodizio_de_vagas.rodizioDeVagas.modules.user.entity.UserRole;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
@@ -11,5 +12,6 @@ public interface UserRepository extends JpaRepository<UserEntity, Long> {
     Optional<UserEntity> findByRegistration(String registration);
     List<UserEntity> findByUserRole(String role);
     Optional<UserEntity> findById(Long id);
-    List<UserEntity> findAllByOrderByFullNameAsc();
+    List<UserEntity> findByUserRoleOrderByFullNameAsc(UserRole userRole);
+
 }
