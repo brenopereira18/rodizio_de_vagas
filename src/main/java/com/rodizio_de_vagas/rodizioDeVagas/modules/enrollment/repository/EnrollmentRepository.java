@@ -15,6 +15,11 @@ public interface EnrollmentRepository extends JpaRepository<EnrollmentEntity, Lo
     int countByWorkEntityAndSubscriptionStatus(WorkEntity workEntity, SubscriptionStatus subscriptionStatus);
     Optional<EnrollmentEntity> findById(Long id);
 
-    @Query("SELECT e FROM EnrollmentEntity e WHERE e.workEntity.serviceDate BETWEEN :startDate AND :endDate")
-    List<EnrollmentEntity> findByWorkEntityServiceDateBetween(LocalDateTime startDate, LocalDateTime endDate);
+    @Query("""
+        SELECT e FROM EnrollmentEntity e
+        WHERE (e.workEntity.workStatus = 'CLOSED' OR e.workEntity.serviceDate < CURRENT_TIMESTAMP)
+        AND e.subscriptionStatus = 'ACCEPTED'
+        AND e.workEntity.serviceDate BETWEEN :startDate AND :endDate
+    """)
+    List<EnrollmentEntity> findConfirmedEnrollmentsByMonth(LocalDateTime startDate, LocalDateTime endDate);
 }
