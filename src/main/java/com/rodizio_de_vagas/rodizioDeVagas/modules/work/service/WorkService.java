@@ -1,16 +1,20 @@
 package com.rodizio_de_vagas.rodizioDeVagas.modules.work.service;
 
 import com.rodizio_de_vagas.rodizioDeVagas.exceptions.ResourceNotFoundException;
+import com.rodizio_de_vagas.rodizioDeVagas.modules.enrollment.entity.SubscriptionStatus;
+import com.rodizio_de_vagas.rodizioDeVagas.modules.enrollment.repository.EnrollmentRepository;
 import com.rodizio_de_vagas.rodizioDeVagas.modules.user.entity.UserEntity;
 import com.rodizio_de_vagas.rodizioDeVagas.modules.user.repository.UserRepository;
 import com.rodizio_de_vagas.rodizioDeVagas.modules.work.entity.WorkEntity;
 import com.rodizio_de_vagas.rodizioDeVagas.modules.work.entity.WorkStatus;
 import com.rodizio_de_vagas.rodizioDeVagas.modules.work.entity.dto.RequestCreateWorkDTO;
 import com.rodizio_de_vagas.rodizioDeVagas.modules.work.repository.WorkRepository;
-import org.hibernate.jdbc.Work;
+
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -21,6 +25,9 @@ public class WorkService {
 
     @Autowired
     private WorkRepository workRepository;
+
+    @Autowired
+    private EnrollmentRepository enrollmentRepository;
 
     public WorkEntity createWork(RequestCreateWorkDTO dto) {
         UserEntity manager = this.userRepository.findById(dto.managerId()).orElseThrow(() ->
@@ -57,4 +64,25 @@ public class WorkService {
 
         this.workRepository.delete(work);
     }
+
+    // Atualiza o status do trabalho para "livre" se passar da data limite de inscrições e ainda tiver sobrando vaga
+    // Verifica de hora em hora, todos os dias
+    @Scheduled(cron = "0 0 * * * *")
+    public void updateExpiredWorksToFree() {
+        List<WorkEntity> works = this.workRepository.findExpiredWorks();
+
+        for (WorkEntity work : works) {
+            int totalEnrollments = enrollmentRepository.countByWorkEntityAndSubscriptionStatus(work, SubscriptionStatus.ACCEPTED);
+
+            if (totalEnrollments < work.getNumberOfVacancies()) {
+                // Ainda tem vaga sobrando, pode ficar LIVRE
+                work.setWorkStatus(WorkStatus.FREE);
+            } else {
+                // Se todas as vagas foram preenchidas, mantemos CLOSED
+                work.setWorkStatus(WorkStatus.CLOSED);
+            }
+        }
+        this.workRepository.saveAll(works);
+    }
+
 }
