@@ -6,14 +6,21 @@ import com.rodizio_de_vagas.rodizioDeVagas.modules.enrollment.entity.Subscriptio
 import com.rodizio_de_vagas.rodizioDeVagas.modules.enrollment.entity.dto.ResponseTaxInfosDTO;
 import com.rodizio_de_vagas.rodizioDeVagas.modules.enrollment.entity.dto.ResponseWorkWithTaxDTO;
 import com.rodizio_de_vagas.rodizioDeVagas.modules.enrollment.repository.EnrollmentRepository;
+import com.rodizio_de_vagas.rodizioDeVagas.modules.notification.service.NotificationService;
+import com.rodizio_de_vagas.rodizioDeVagas.modules.priorityQueue.service.PriorityQueueService;
+import com.rodizio_de_vagas.rodizioDeVagas.modules.user.entity.UserEntity;
 import com.rodizio_de_vagas.rodizioDeVagas.modules.user.repository.UserRepository;
+import com.rodizio_de_vagas.rodizioDeVagas.modules.work.entity.Category;
 import com.rodizio_de_vagas.rodizioDeVagas.modules.work.entity.WorkEntity;
 import com.rodizio_de_vagas.rodizioDeVagas.modules.work.entity.WorkStatus;
 import com.rodizio_de_vagas.rodizioDeVagas.modules.work.repository.WorkRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.Map;
@@ -31,32 +38,73 @@ public class EnrollmentService {
     @Autowired
     private UserRepository userRepository;
 
-    public EnrollmentEntity createEnrollment(Long workId, Long userId) {
-        WorkEntity work = this.workRepository.findById(workId).orElseThrow(() ->
-            new ResourceNotFoundException("Trabalho não encontrado"));
+    @Autowired
+    private NotificationService notificationService;
 
-        int totalEnrollments = this.enrollmentRepository.countByWorkEntityAndSubscriptionStatus(work, SubscriptionStatus.ACCEPTED);
+    @Autowired
+    private PriorityQueueService priorityQueueService;
 
-        if (totalEnrollments >= work.getNumberOfVacancies()) {
-            work.setWorkStatus(WorkStatus.CLOSED);
-            this.workRepository.save(work);
-            throw new RuntimeException("Não a mais vagas disponíveis para esse serviço");
+    /**
+     * Atualiza a resposta do fiscal (aceitar ou recusar) e o move para o final da fila.
+     *
+     * @param workId   id do trabalho
+     * @param userId   id do fiscal
+     * @param accepted se aceitou ou recusou o trabalho
+     */
+    @Transactional
+    public void respondToEnrollment(Long workId, Long userId, boolean accepted) {
+        EnrollmentEntity enrollment = enrollmentRepository.findByWorkEntityIdAndUserEntityIdAndSubscriptionStatus(
+                workId, userId, SubscriptionStatus.WAITING)
+            .orElseThrow(() -> new ResourceNotFoundException("Inscrição pendente não encontrada."));
+
+        WorkEntity work = enrollment.getWorkEntity();
+        UserEntity user = enrollment.getUserEntity();
+        Category category = work.getCategory();
+
+        if (accepted) {
+            enrollment.setSubscriptionStatus(SubscriptionStatus.ACCEPTED);
+            enrollmentRepository.save(enrollment);
+        } else {
+            enrollment.setSubscriptionStatus(SubscriptionStatus.REFUSED);
+            enrollmentRepository.save(enrollment);
         }
 
-        EnrollmentEntity enrollment = EnrollmentEntity.builder()
-            .workEntity(work)
-            .userEntity(this.userRepository.findById(userId).orElseThrow(() -> new ResourceNotFoundException("Fiscal não encontrado")))
-            .subscriptionStatus(SubscriptionStatus.ACCEPTED)
-            .build();
+        // Move o fiscal para o final da fila
+        priorityQueueService.sendFiscalToEndOfQueue(user, category);
 
-        return this.enrollmentRepository.save(enrollment);
+        // Verifica se ainda há vagas e notifica o próximo fiscal
+        int totalAccepted = enrollmentRepository.countByWorkEntityAndSubscriptionStatus(work, SubscriptionStatus.ACCEPTED);
+
+        if (totalAccepted < work.getNumberOfVacancies()) {
+            notificationService.notifyNextFiscal(work, category);
+        } else {
+            work.setWorkStatus(WorkStatus.CLOSED);
+            workRepository.save(work);
+        }
+    }
+
+    @Scheduled(cron = "0 0 * * * *")
+    @Transactional
+    public void processExpiredNotifications() {
+        List<EnrollmentEntity> expiredEnrollments = enrollmentRepository.findExpiredWaitingEnrollments();
+
+        for (EnrollmentEntity enrollment : expiredEnrollments) {
+            enrollment.setSubscriptionStatus(SubscriptionStatus.EXPIRED);
+            enrollmentRepository.save(enrollment);
+
+            // Move fiscal para o final da fila
+            priorityQueueService.sendFiscalToEndOfQueue(enrollment.getUserEntity(), enrollment.getWorkEntity().getCategory());
+
+            // Notifica o próximo fiscal
+            notificationService.notifyNextFiscal(enrollment.getWorkEntity(), enrollment.getWorkEntity().getCategory());
+        }
     }
 
     /**
      * Agrupa inscrições realizadas em um determinado mês e ano, organizadas por título do serviço.
      *
      * @param month Mês das inscrições a serem consultadas.
-     * @param year Ano das inscrições a serem consultadas.
+     * @param year  Ano das inscrições a serem consultadas.
      * @return Lista de serviços com as respectivas inscrições e status de cada inscrito.
      */
     public List<ResponseWorkWithTaxDTO> getGroupedEnrollmentsByMonth(int month, int year) {
@@ -91,6 +139,12 @@ public class EnrollmentService {
             .collect(Collectors.toList());
     }
 
+    /**
+     * Cancela inscrição do fiscal em um trabalho.
+     *
+     * @param enrollmentId id da inscrição
+     */
+    @Transactional
     public void cancelEnrollment(Long enrollmentId) {
         EnrollmentEntity enrollment = this.enrollmentRepository.findById(enrollmentId).orElseThrow(() ->
             new ResourceNotFoundException("Inscrição não encontrada"));
@@ -100,9 +154,23 @@ public class EnrollmentService {
 
         WorkEntity work = enrollment.getWorkEntity();
 
-        if (work.getWorkStatus() == WorkStatus.CLOSED) {
+        // Caso ainda esteja no prazo de inscrição
+        if (work.getRegistrationLimit().isAfter(LocalDateTime.now())) {
+            // Ainda pode chamar o próximo da fila
+            int totalAccepted = enrollmentRepository.countByWorkEntityAndSubscriptionStatus(work, SubscriptionStatus.ACCEPTED);
+
+            if (totalAccepted < work.getNumberOfVacancies()) {
+                // Notifica o próximo fiscal da fila
+                notificationService.notifyNextFiscal(work, work.getCategory());
+            } else {
+                // Se todas as vagas estiverem preenchidas, fecha o serviço
+                work.setWorkStatus(WorkStatus.CLOSED);
+                workRepository.save(work);
+            }
+        } else {
+            // Se passou do prazo de inscrição, serviço fica livre para qualquer fiscal
             work.setWorkStatus(WorkStatus.FREE);
-            this.workRepository.save(work);
+            workRepository.save(work);
         }
     }
 }
