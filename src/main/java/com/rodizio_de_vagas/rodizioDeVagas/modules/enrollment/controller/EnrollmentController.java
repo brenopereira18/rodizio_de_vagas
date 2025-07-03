@@ -18,10 +18,11 @@ public class EnrollmentController {
     @Autowired
     private EnrollmentService enrollmentService;
 
-    @PostMapping
-    public ResponseEntity<EnrollmentEntity> createEnrollment(@RequestBody RequestCreateEnrollmentDTO dto) {
-        EnrollmentEntity enrollment = this.enrollmentService.createEnrollment(dto.workId(), dto.userId());
-        return ResponseEntity.ok().body(enrollment);
+    @PutMapping("/{workId}/respond")
+    public ResponseEntity<String> respondToEnrollment(@PathVariable Long workId, @RequestParam Long userId, @RequestParam boolean accepted) {
+        enrollmentService.respondToEnrollment(workId, userId, accepted);
+        String message = accepted ? "Inscrição realizada com sucesso." : "Recusa registrada com sucesso. Próximo fiscal será notifica.";
+        return ResponseEntity.ok(message);
     }
 
     @GetMapping
@@ -33,6 +34,6 @@ public class EnrollmentController {
     @PutMapping("/{id}/cancelled")
     public ResponseEntity<String> cancelEnrollment(@PathVariable Long id) {
         this.enrollmentService.cancelEnrollment(id);
-        return ResponseEntity.ok("Inscrição cancelada com sucesso. O serviço está disponivel novamente.");
+        return ResponseEntity.ok("Inscrição cancelada com sucesso.");
     }
 }

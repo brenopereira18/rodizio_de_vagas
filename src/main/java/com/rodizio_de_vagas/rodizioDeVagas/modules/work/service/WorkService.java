@@ -3,6 +3,7 @@ package com.rodizio_de_vagas.rodizioDeVagas.modules.work.service;
 import com.rodizio_de_vagas.rodizioDeVagas.exceptions.ResourceNotFoundException;
 import com.rodizio_de_vagas.rodizioDeVagas.modules.enrollment.entity.SubscriptionStatus;
 import com.rodizio_de_vagas.rodizioDeVagas.modules.enrollment.repository.EnrollmentRepository;
+import com.rodizio_de_vagas.rodizioDeVagas.modules.notification.service.NotificationService;
 import com.rodizio_de_vagas.rodizioDeVagas.modules.user.entity.UserEntity;
 import com.rodizio_de_vagas.rodizioDeVagas.modules.user.repository.UserRepository;
 import com.rodizio_de_vagas.rodizioDeVagas.modules.work.entity.WorkEntity;
@@ -27,6 +28,9 @@ public class WorkService {
     private WorkRepository workRepository;
 
     @Autowired
+    private NotificationService notificationService;
+
+    @Autowired
     private EnrollmentRepository enrollmentRepository;
 
     public WorkEntity createWork(RequestCreateWorkDTO dto) {
@@ -42,6 +46,8 @@ public class WorkService {
             .category(dto.category())
             .numberOfVacancies(dto.numberOfVacancies())
             .build();
+
+        this.notificationService.notifyInitialsTax(work);
         return this.workRepository.save(work);
     }
 
