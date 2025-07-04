@@ -18,10 +18,10 @@ public class EnrollmentController {
     @Autowired
     private EnrollmentService enrollmentService;
 
-    @PutMapping("/{workId}/respond")
-    public ResponseEntity<String> respondToEnrollment(@PathVariable Long workId, @RequestParam Long userId, @RequestParam boolean accepted) {
+    @PutMapping("/{workId}/respond/{userId}")
+    public ResponseEntity<String> respondToEnrollment(@PathVariable Long workId, @PathVariable Long userId, @RequestParam boolean accepted) {
         enrollmentService.respondToEnrollment(workId, userId, accepted);
-        String message = accepted ? "Inscrição realizada com sucesso." : "Recusa registrada com sucesso. Próximo fiscal será notifica.";
+        String message = accepted ? "Inscrição realizada com sucesso." : "Trabalho recusado. Próximo fiscal será notificado.";
         return ResponseEntity.ok(message);
     }
 

@@ -53,44 +53,84 @@ public class EnrollmentService {
      */
     @Transactional
     public void respondToEnrollment(Long workId, Long userId, boolean accepted) {
-        EnrollmentEntity enrollment = enrollmentRepository.findByWorkEntityIdAndUserEntityIdAndSubscriptionStatus(
+        EnrollmentEntity enrollment = this.enrollmentRepository.findByWorkEntityIdAndUserEntityIdAndSubscriptionStatus(
                 workId, userId, SubscriptionStatus.WAITING)
             .orElseThrow(() -> new ResourceNotFoundException("Inscrição pendente não encontrada."));
+
+        if (enrollment.getSubscriptionStatus() != SubscriptionStatus.WAITING) {
+            throw new IllegalStateException("Esta inscrição já foi respondida.");
+        }
+
+        if (accepted) {
+            handleEnrollmentAcceptance(enrollment);
+        } else {
+            handleEnrollmentRejection(enrollment);
+        }
+        priorityQueueService.sendFiscalToEndOfQueue(enrollment.getUserEntity(), enrollment.getWorkEntity().getCategory());
+        finalizeWorkStatus(enrollment.getWorkEntity());
+    }
+
+    private void handleEnrollmentAcceptance(EnrollmentEntity enrollment) {
+        enrollment.setSubscriptionStatus(SubscriptionStatus.ACCEPTED);
+        this.enrollmentRepository.save(enrollment);
 
         WorkEntity work = enrollment.getWorkEntity();
         UserEntity user = enrollment.getUserEntity();
         Category category = work.getCategory();
 
-        if (accepted) {
-            enrollment.setSubscriptionStatus(SubscriptionStatus.ACCEPTED);
-            enrollmentRepository.save(enrollment);
-        } else {
-            enrollment.setSubscriptionStatus(SubscriptionStatus.REFUSED);
-            enrollmentRepository.save(enrollment);
-        }
+        List<EnrollmentEntity> worksWithRegistrationOnHold = this.enrollmentRepository
+            .findByUserEntityIdAndWorkEntityCategoryAndSubscriptionStatus(user.getId(), category, SubscriptionStatus.WAITING)
+            .stream()
+            .filter(e -> !e.getWorkEntity().getId().equals(work.getId()))
+            .toList();
 
-        // Move o fiscal para o final da fila
-        priorityQueueService.sendFiscalToEndOfQueue(user, category);
+        this.enrollmentRepository.cancelOtherEnrollmentsInCategory(user.getId(), category, work.getId());
 
-        // Verifica se ainda há vagas e notifica o próximo fiscal
-        int totalAccepted = enrollmentRepository.countByWorkEntityAndSubscriptionStatus(work, SubscriptionStatus.ACCEPTED);
+        worksWithRegistrationOnHold.forEach(pendingEnrollment ->
+            notificationService.notifyNextFiscal(pendingEnrollment.getWorkEntity(), category)
+        );
+    }
+
+    private void handleEnrollmentRejection(EnrollmentEntity enrollment) {
+        enrollment.setSubscriptionStatus(SubscriptionStatus.REFUSED);
+        this.enrollmentRepository.save(enrollment);
+
+        WorkEntity work = enrollment.getWorkEntity();
+        Category category = work.getCategory();
+
+        int totalAccepted = this.enrollmentRepository.countByWorkEntityAndSubscriptionStatus(work, SubscriptionStatus.ACCEPTED);
 
         if (totalAccepted < work.getNumberOfVacancies()) {
-            notificationService.notifyNextFiscal(work, category);
+            this.notificationService.notifyNextFiscal(work, category);
         } else {
-            work.setWorkStatus(WorkStatus.CLOSED);
-            workRepository.save(work);
+            closeWork(work);
         }
+    }
+
+    private void finalizeWorkStatus(WorkEntity work) {
+        int totalAccepted = this.enrollmentRepository.countByWorkEntityAndSubscriptionStatus(work, SubscriptionStatus.ACCEPTED);
+        boolean hasPending = this.enrollmentRepository.existsByWorkEntityAndSubscriptionStatus(work, SubscriptionStatus.WAITING);
+
+        if (totalAccepted < work.getNumberOfVacancies() && !hasPending) {
+            this.notificationService.notifyNextFiscal(work, work.getCategory());
+        } else {
+            closeWork(work);
+        }
+    }
+
+    private void closeWork(WorkEntity work) {
+        work.setWorkStatus(WorkStatus.CLOSED);
+        workRepository.save(work);
     }
 
     @Scheduled(cron = "0 0 * * * *")
     @Transactional
     public void processExpiredNotifications() {
-        List<EnrollmentEntity> expiredEnrollments = enrollmentRepository.findExpiredWaitingEnrollments();
+        List<EnrollmentEntity> expiredEnrollments = this.enrollmentRepository.findExpiredWaitingEnrollments();
 
         for (EnrollmentEntity enrollment : expiredEnrollments) {
             enrollment.setSubscriptionStatus(SubscriptionStatus.EXPIRED);
-            enrollmentRepository.save(enrollment);
+            this.enrollmentRepository.save(enrollment);
 
             // Move fiscal para o final da fila
             priorityQueueService.sendFiscalToEndOfQueue(enrollment.getUserEntity(), enrollment.getWorkEntity().getCategory());
@@ -112,9 +152,13 @@ public class EnrollmentService {
         LocalDate endDate = startDate.withDayOfMonth(startDate.lengthOfMonth());
 
         List<EnrollmentEntity> enrollments = this.enrollmentRepository.findConfirmedEnrollmentsByMonth(startDate.atStartOfDay(), endDate.atTime(LocalTime.MAX));
+        Map<WorkEntity, List<ResponseTaxInfosDTO>> groupedEnrollments = groupEnrollments(enrollments);
+        return buildResponse(groupedEnrollments);
+    }
 
-        // Agrupa as inscrições por título do serviço e mapeia as informações fiscais de cada inscrito
-        Map<WorkEntity, List<ResponseTaxInfosDTO>> grouped = enrollments.stream()
+    // Agrupa as inscrições por título do serviço e mapeia as informações fiscais de cada inscrito
+    private Map<WorkEntity, List<ResponseTaxInfosDTO>> groupEnrollments(List<EnrollmentEntity> enrollments) {
+        return enrollments.stream()
             .collect(Collectors.groupingBy(
                 EnrollmentEntity::getWorkEntity,
                 Collectors.mapping(
@@ -122,9 +166,11 @@ public class EnrollmentService {
                     Collectors.toList()
                 )
             ));
+    }
 
-        // Constrói a lista de resposta formatada para retornar os grupos com os respectivos inscritos
-        return grouped.entrySet().stream()
+    // Constrói a lista de resposta formatada para retornar os grupos com os respectivos inscritos
+    private List<ResponseWorkWithTaxDTO> buildResponse(Map<WorkEntity, List<ResponseTaxInfosDTO>> groupedEnrollments) {
+        return groupedEnrollments.entrySet().stream()
             .map(entry -> {
                 WorkEntity work = entry.getKey();
                 return new ResponseWorkWithTaxDTO(
@@ -154,23 +200,23 @@ public class EnrollmentService {
 
         WorkEntity work = enrollment.getWorkEntity();
 
-        // Caso ainda esteja no prazo de inscrição
+        // Caso ainda esteja no prazo de inscrição, ainda pode chamar o próximo da fila
         if (work.getRegistrationLimit().isAfter(LocalDateTime.now())) {
-            // Ainda pode chamar o próximo da fila
-            int totalAccepted = enrollmentRepository.countByWorkEntityAndSubscriptionStatus(work, SubscriptionStatus.ACCEPTED);
-
-            if (totalAccepted < work.getNumberOfVacancies()) {
-                // Notifica o próximo fiscal da fila
-                notificationService.notifyNextFiscal(work, work.getCategory());
-            } else {
-                // Se todas as vagas estiverem preenchidas, fecha o serviço
-                work.setWorkStatus(WorkStatus.CLOSED);
-                workRepository.save(work);
-            }
+            handleOpenRegistration(work);
         } else {
             // Se passou do prazo de inscrição, serviço fica livre para qualquer fiscal
             work.setWorkStatus(WorkStatus.FREE);
             workRepository.save(work);
+        }
+    }
+
+    private void handleOpenRegistration(WorkEntity work) {
+        int totalAccepted = enrollmentRepository.countByWorkEntityAndSubscriptionStatus(work, SubscriptionStatus.ACCEPTED);
+
+        if (totalAccepted < work.getNumberOfVacancies()) {
+            notificationService.notifyNextFiscal(work, work.getCategory());
+        } else {
+            closeWork(work);
         }
     }
 }

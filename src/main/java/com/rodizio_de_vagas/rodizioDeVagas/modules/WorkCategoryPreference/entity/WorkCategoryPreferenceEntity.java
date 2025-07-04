@@ -1,4 +1,4 @@
-package com.rodizio_de_vagas.rodizioDeVagas.modules.jobCategoryPreference.entity;
+package com.rodizio_de_vagas.rodizioDeVagas.modules.WorkCategoryPreference.entity;
 
 import com.rodizio_de_vagas.rodizioDeVagas.modules.user.entity.UserEntity;
 import com.rodizio_de_vagas.rodizioDeVagas.modules.work.entity.Category;
@@ -15,7 +15,7 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class JobCategoryPreferenceEntity {
+public class WorkCategoryPreferenceEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -31,5 +31,5 @@ public class JobCategoryPreferenceEntity {
     private Category category;
 
     @Column(name = "esta_ativo", nullable = false)
-    private boolean isActive;
+    private boolean isActive = true;
 }
