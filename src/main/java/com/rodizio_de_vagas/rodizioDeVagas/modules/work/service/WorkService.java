@@ -47,8 +47,9 @@ public class WorkService {
             .numberOfVacancies(dto.numberOfVacancies())
             .build();
 
+        work = this.workRepository.save(work);
         this.notificationService.notifyInitialsTax(work);
-        return this.workRepository.save(work);
+        return work;
     }
 
     public List<WorkEntity> getAllWorks(String status) {

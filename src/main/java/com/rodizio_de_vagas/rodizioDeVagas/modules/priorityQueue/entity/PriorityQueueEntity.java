@@ -30,6 +30,6 @@ public class PriorityQueueEntity {
     @Column(name = "categoria", nullable = false)
     private Category category;
 
-    @Column(name = "posicao_na_fila", nullable = false)
+    @Column(name = "posicao_na_fila")
     private Integer positionInLine;
 }

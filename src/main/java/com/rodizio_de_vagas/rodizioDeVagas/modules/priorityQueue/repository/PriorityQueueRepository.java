@@ -2,7 +2,11 @@ package com.rodizio_de_vagas.rodizioDeVagas.modules.priorityQueue.repository;
 
 import com.rodizio_de_vagas.rodizioDeVagas.modules.priorityQueue.entity.PriorityQueueEntity;
 import com.rodizio_de_vagas.rodizioDeVagas.modules.work.entity.Category;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
@@ -13,4 +17,13 @@ public interface PriorityQueueRepository extends JpaRepository<PriorityQueueEnti
     List<PriorityQueueEntity> findByCategoryOrderByPositionInLine(Category category);
     Optional<PriorityQueueEntity> findByUserEntityIdAndCategory(Long userId, Category category);
     long countByCategory(Category category);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT q FROM PriorityQueueEntity q WHERE q.category = :category ORDER BY q.positionInLine")
+    List<PriorityQueueEntity> findByCategoryOrderByPositionInLineWithLock(@Param("category") Category category);
+
+    @Query("SELECT MAX(q.positionInLine) FROM PriorityQueueEntity q WHERE q.category = :category")
+    Optional<Integer> findMaxPositionByCategory(@Param("category") Category category);
+
+
 }

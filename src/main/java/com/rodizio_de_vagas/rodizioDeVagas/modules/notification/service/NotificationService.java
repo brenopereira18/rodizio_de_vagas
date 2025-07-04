@@ -34,7 +34,7 @@ public class NotificationService {
         Category category = work.getCategory();
         int numberOfVacancies = work.getNumberOfVacancies();
 
-        List<PriorityQueueEntity> queue = priorityQueueRepository.findByCategoryOrderByPositionInLine(category);
+        List<PriorityQueueEntity> queue = this.priorityQueueRepository.findByCategoryOrderByPositionInLine(category);
 
         // Seleciona os primeiros fiscais da fila
         List<PriorityQueueEntity> selectedTax = queue.stream()
@@ -49,7 +49,7 @@ public class NotificationService {
 
     @Transactional
     public void notifyNextFiscal(WorkEntity work, Category category) {
-        List<PriorityQueueEntity> queue = priorityQueueRepository.findByCategoryOrderByPositionInLine(category);
+        List<PriorityQueueEntity> queue = this.priorityQueueRepository.findByCategoryOrderByPositionInLine(category);
 
         // Verifica quem já foi notificado ou já está inscrito nesse trabalho.
         List<Long> notifiedUserIds = notificationRepository.findUserIdsByWorkId(work.getId());
@@ -61,7 +61,7 @@ public class NotificationService {
             .findFirst();
 
         if (nextFiscalOpt.isEmpty()) {
-            System.out.println("⚠️ Nenhum fiscal disponível para notificação.");
+            System.out.println("Nenhum fiscal disponível para notificação.");
             return;
         }
 

@@ -2,6 +2,7 @@ package com.rodizio_de_vagas.rodizioDeVagas.modules.user.service;
 
 import com.rodizio_de_vagas.rodizioDeVagas.exceptions.EntityAlreadyExistsException;
 import com.rodizio_de_vagas.rodizioDeVagas.exceptions.ResourceNotFoundException;
+import com.rodizio_de_vagas.rodizioDeVagas.modules.WorkCategoryPreference.service.WorkCategoryPreferenceService;
 import com.rodizio_de_vagas.rodizioDeVagas.modules.user.entity.UserEntity;
 import com.rodizio_de_vagas.rodizioDeVagas.modules.user.entity.dto.RequestCreateUserDTO;
 import com.rodizio_de_vagas.rodizioDeVagas.modules.user.entity.dto.RequestUpdateUserDTO;
@@ -18,6 +19,9 @@ public class UserService {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private WorkCategoryPreferenceService workCategoryPreferenceService;
+
     public UserEntity createUser(RequestCreateUserDTO userDTO) {
         this.userRepository.findByRegistration(userDTO.registration())
             .ifPresent(u -> {
@@ -31,6 +35,8 @@ public class UserService {
             .password(userDTO.registration())
             .userRole(userDTO.userRole())
             .build();
+
+        this.workCategoryPreferenceService.createInitialPreferencesForUser(user);
         return this.userRepository.save(user);
     }
 
