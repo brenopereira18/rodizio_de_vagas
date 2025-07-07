@@ -5,6 +5,7 @@ import com.rodizio_de_vagas.rodizioDeVagas.modules.WorkCategoryPreference.entity
 import com.rodizio_de_vagas.rodizioDeVagas.modules.WorkCategoryPreference.repository.WorkCategoryPreferenceRepository;
 import com.rodizio_de_vagas.rodizioDeVagas.modules.priorityQueue.service.PriorityQueueService;
 import com.rodizio_de_vagas.rodizioDeVagas.modules.user.entity.UserEntity;
+import com.rodizio_de_vagas.rodizioDeVagas.modules.user.entity.UserRole;
 import com.rodizio_de_vagas.rodizioDeVagas.modules.work.entity.Category;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -43,6 +44,10 @@ public class WorkCategoryPreferenceService {
     }
 
     public void createInitialPreferencesForUser(UserEntity user) {
+        if (user.getUserRole() == UserRole.SUPERVISOR || user.getUserRole() == UserRole.ADMINISTRADOR ) {
+            return;
+        }
+
         for (Category category : Category.values()) {
             WorkCategoryPreferenceEntity preference = WorkCategoryPreferenceEntity.builder()
                 .userEntity(user)
