@@ -92,8 +92,6 @@ public class NotificationService {
             .build();
 
         this.enrollmentRepository.save(enrollment);
-
-        // (Opcional) Disparar notificação real via WhatsApp
         this.whatsappNotificationService.sendMessage(tax.getPhoneNumber(), notification.getMessage());
     }
 }
