@@ -1,5 +1,6 @@
 package com.rodizio_de_vagas.rodizioDeVagas.modules.user.entity;
 
+import com.rodizio_de_vagas.rodizioDeVagas.modules.WorkCategoryPreference.entity.WorkCategoryPreferenceEntity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
@@ -8,6 +9,9 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "fiscal")
@@ -43,4 +47,7 @@ public class UserEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "funcao")
     private UserRole userRole;
+
+    @OneToMany(mappedBy = "userEntity", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<WorkCategoryPreferenceEntity> preferences = new ArrayList<>();
 }
