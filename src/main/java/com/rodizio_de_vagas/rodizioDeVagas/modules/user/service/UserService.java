@@ -36,12 +36,13 @@ public class UserService {
             .userRole(userDTO.userRole())
             .build();
 
+        this.userRepository.save(user);
         this.workCategoryPreferenceService.createInitialPreferencesForUser(user);
-        return this.userRepository.save(user);
+        return user;
     }
 
-     public UserEntity getUser(String registration) {
-        return this.userRepository.findByRegistration(registration).orElseThrow(() ->
+     public UserEntity getUser(Long id) {
+        return this.userRepository.findById(id).orElseThrow(() ->
             new ResourceNotFoundException("Fiscal não encontrado."));
      }
 
@@ -53,8 +54,8 @@ public class UserService {
         ).toList();
      }
 
-     public UserEntity updateUser(String registration, RequestUpdateUserDTO dto) {
-        UserEntity user = this.userRepository.findByRegistration(registration).orElseThrow(() ->
+     public UserEntity updateUser(Long id, RequestUpdateUserDTO dto) {
+        UserEntity user = this.userRepository.findById(id).orElseThrow(() ->
             new ResourceNotFoundException("Fiscal não encontrado."));
 
         user.setPhoneNumber(dto.phoneNumber());
@@ -62,8 +63,8 @@ public class UserService {
         return this.userRepository.save(user);
      }
 
-     public void deleteUser(String registration) {
-         UserEntity user = this.userRepository.findByRegistration(registration).orElseThrow(() ->
+     public void deleteUser(Long id) {
+         UserEntity user = this.userRepository.findById(id).orElseThrow(() ->
              new ResourceNotFoundException("Fiscal não encontrado."));
 
          this.userRepository.delete(user);
