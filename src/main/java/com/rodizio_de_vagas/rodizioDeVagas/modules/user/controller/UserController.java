@@ -25,9 +25,9 @@ public class UserController {
         return ResponseEntity.ok().body(user);
     }
 
-    @GetMapping("/{registration}")
-    public ResponseEntity<UserEntity> getUser(@PathVariable String registration) {
-        UserEntity user = this.userService.getUser(registration);
+    @GetMapping("/{id}")
+    public ResponseEntity<UserEntity> getUser(@PathVariable Long id) {
+        UserEntity user = this.userService.getUser(id);
         return ResponseEntity.ok().body(user);
     }
 
@@ -37,15 +37,15 @@ public class UserController {
         return ResponseEntity.ok(managers);
     }
 
-    @PutMapping("/{registration}/profile")
-    public ResponseEntity<UserEntity> updateUser(@PathVariable String registration,@Valid  @RequestBody RequestUpdateUserDTO dto) {
-        UserEntity user = this.userService.updateUser(registration, dto);
+    @PutMapping("/{id}/profile")
+    public ResponseEntity<UserEntity> updateUser(@PathVariable Long id,@Valid  @RequestBody RequestUpdateUserDTO dto) {
+        UserEntity user = this.userService.updateUser(id, dto);
         return ResponseEntity.ok().body(user);
     }
 
-    @DeleteMapping("/{registration}")
-    public ResponseEntity<Void> deleteUser(@PathVariable String registration) {
-        this.userService.deleteUser(registration);
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
+        this.userService.deleteUser(id);
         return ResponseEntity.noContent().build();
     }
 }
