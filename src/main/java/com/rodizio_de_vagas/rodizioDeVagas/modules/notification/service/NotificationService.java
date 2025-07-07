@@ -3,6 +3,7 @@ package com.rodizio_de_vagas.rodizioDeVagas.modules.notification.service;
 import com.rodizio_de_vagas.rodizioDeVagas.modules.enrollment.entity.EnrollmentEntity;
 import com.rodizio_de_vagas.rodizioDeVagas.modules.enrollment.entity.SubscriptionStatus;
 import com.rodizio_de_vagas.rodizioDeVagas.modules.enrollment.repository.EnrollmentRepository;
+import com.rodizio_de_vagas.rodizioDeVagas.modules.evolutionAPI.service.WhatsappNotificationService;
 import com.rodizio_de_vagas.rodizioDeVagas.modules.notification.entity.NotificationEntity;
 import com.rodizio_de_vagas.rodizioDeVagas.modules.notification.repository.NotificationRepository;
 import com.rodizio_de_vagas.rodizioDeVagas.modules.priorityQueue.entity.PriorityQueueEntity;
@@ -29,6 +30,9 @@ public class NotificationService {
 
     @Autowired
     private EnrollmentRepository enrollmentRepository;
+
+    @Autowired
+    private WhatsappNotificationService whatsappNotificationService;
 
     public void notifyInitialsTax(WorkEntity work) {
         Category category = work.getCategory();
@@ -69,14 +73,13 @@ public class NotificationService {
         notifyTax(nextFiscal, work);
     }
 
-
     private void notifyTax(UserEntity tax, WorkEntity work) {
         NotificationEntity notification = NotificationEntity.builder()
             .workEntity(work)
             .userEntity(tax)
             .shippingDate(LocalDateTime.now())
             .responseDeadline(LocalDateTime.now().plusHours(2))
-            .message("Olá " + tax.getFullName() + ", temos um serviço disponível no qual você tem prioridade. Acesse o link para visualizá-lo.")
+            .message("Olá " + tax.getFullName() + ", temos um serviço disponível da categoria " + work.getCategory()  + " no qual você tem prioridade. Acesse o link para visualizá-lo.")
             .workLink("url-do-trabalho")
             .build();
 
@@ -91,7 +94,6 @@ public class NotificationService {
         this.enrollmentRepository.save(enrollment);
 
         // (Opcional) Disparar notificação real via WhatsApp
+        this.whatsappNotificationService.sendMessage(tax.getPhoneNumber(), notification.getMessage());
     }
-
-
 }
