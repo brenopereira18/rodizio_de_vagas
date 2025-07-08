@@ -17,7 +17,7 @@ public interface EnrollmentRepository extends JpaRepository<EnrollmentEntity, Lo
 
     int countByWorkEntityAndSubscriptionStatus(WorkEntity workEntity, SubscriptionStatus subscriptionStatus);
 
-    Optional<EnrollmentEntity> findByWorkEntityIdAndUserEntityIdAndSubscriptionStatus(Long workId, Long userId, SubscriptionStatus status);
+    Optional<EnrollmentEntity> findByWorkEntityIdAndUserEntityRegistrationAndSubscriptionStatus(Long workId, String registration, SubscriptionStatus status);
 
     Optional<EnrollmentEntity> findById(Long id);
 

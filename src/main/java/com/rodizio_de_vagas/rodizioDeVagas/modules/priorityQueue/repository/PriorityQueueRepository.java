@@ -15,7 +15,7 @@ public interface PriorityQueueRepository extends JpaRepository<PriorityQueueEnti
 
     boolean existsByCategory(Category category);
     List<PriorityQueueEntity> findByCategoryOrderByPositionInLine(Category category);
-    Optional<PriorityQueueEntity> findByUserEntityIdAndCategory(Long userId, Category category);
+    Optional<PriorityQueueEntity> findByUserEntityRegistrationAndCategory(String registration, Category category);
     long countByCategory(Category category);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)

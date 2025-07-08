@@ -52,8 +52,8 @@ public class PriorityQueueService {
         }
     }
 
-    public void deactivateFiscalFromCategory(Long userId, Category category) {
-        PriorityQueueEntity queue = this.priorityQueueRepository.findByUserEntityIdAndCategory(userId, category)
+    public void deactivateFiscalFromCategory(String registration, Category category) {
+        PriorityQueueEntity queue = this.priorityQueueRepository.findByUserEntityRegistrationAndCategory(registration, category)
             .orElseThrow(() -> new ResourceNotFoundException("Fiscal não encontrado na fila"));
 
         int leavingPosition = queue.getPositionInLine();
@@ -69,11 +69,11 @@ public class PriorityQueueService {
         }
     }
 
-    public void activateFiscalInCategory(Long userId, Category category) {
+    public void activateFiscalInCategory(String registration, Category category) {
         int maxPosition = this.priorityQueueRepository.findMaxPositionByCategory(category).orElse(0);
 
         PriorityQueueEntity queue = PriorityQueueEntity.builder()
-            .userEntity(userRepository.findById(userId).orElseThrow(() -> new ResourceNotFoundException("Fiscal não encontrado")))
+            .userEntity(userRepository.findByRegistration(registration).orElseThrow(() -> new ResourceNotFoundException("Fiscal não encontrado")))
             .category(category)
             .positionInLine(maxPosition + 1)
             .build();

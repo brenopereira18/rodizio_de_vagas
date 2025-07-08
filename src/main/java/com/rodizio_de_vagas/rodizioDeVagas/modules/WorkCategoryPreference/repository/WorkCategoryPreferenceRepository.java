@@ -9,7 +9,7 @@ import java.util.Optional;
 
 public interface WorkCategoryPreferenceRepository extends JpaRepository<WorkCategoryPreferenceEntity, Long> {
 
-    List<WorkCategoryPreferenceEntity> findByUserEntityId(Long userId);
+    List<WorkCategoryPreferenceEntity> findByUserEntityRegistration(String registration);
 
-    Optional<WorkCategoryPreferenceEntity> findByUserEntityIdAndCategory(Long userId, Category category);
+    Optional<WorkCategoryPreferenceEntity> findByUserEntityRegistrationAndCategory(String registration, Category category);
 }

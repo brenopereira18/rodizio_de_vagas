@@ -21,12 +21,12 @@ public class WorkCategoryPreferenceService {
     @Autowired
     private PriorityQueueService priorityQueueService;
 
-    public List<WorkCategoryPreferenceEntity> getPreferencesByUser(Long userId) {
-        return this.workCategoryPreferenceRepository.findByUserEntityId(userId);
+    public List<WorkCategoryPreferenceEntity> getPreferencesByUser(String registration) {
+        return this.workCategoryPreferenceRepository.findByUserEntityRegistration(registration);
     }
 
-    public void updatePreference(Long userId, Category category, boolean active) {
-        WorkCategoryPreferenceEntity preference = this.workCategoryPreferenceRepository.findByUserEntityIdAndCategory(userId, category)
+    public void updatePreference(String registration, Category category, boolean active) {
+        WorkCategoryPreferenceEntity preference = this.workCategoryPreferenceRepository.findByUserEntityRegistrationAndCategory(registration, category)
             .orElseThrow(() -> new ResourceNotFoundException("Preferência não encontrada."));
 
         boolean wasActive = preference.isActive();
@@ -36,10 +36,10 @@ public class WorkCategoryPreferenceService {
 
         if (wasActive && !active) {
             // Fiscal está desativando a categoria, remover da fila
-            priorityQueueService.deactivateFiscalFromCategory(userId, category);
+            priorityQueueService.deactivateFiscalFromCategory(registration, category);
         } else if (!wasActive && active) {
             // Fiscal está ativando a categoria, adicionar no final da fila
-            priorityQueueService.activateFiscalInCategory(userId, category);
+            priorityQueueService.activateFiscalInCategory(registration, category);
         }
     }
 
