@@ -9,6 +9,7 @@ import com.rodizio_de_vagas.rodizioDeVagas.modules.user.entity.dto.RequestUpdate
 import com.rodizio_de_vagas.rodizioDeVagas.modules.user.entity.dto.ResponseManagerDTO;
 import com.rodizio_de_vagas.rodizioDeVagas.modules.user.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -28,11 +29,12 @@ public class UserService {
                 throw new EntityAlreadyExistsException("Fiscal já cadastrado.");
             });
 
+        String encryptedPassword = new BCryptPasswordEncoder().encode(userDTO.registration());
         UserEntity user = UserEntity.builder()
             .fullName(userDTO.fullName())
             .registration(userDTO.registration())
             .phoneNumber(userDTO.phoneNumber())
-            .password(userDTO.registration())
+            .password(encryptedPassword)
             .userRole(userDTO.userRole())
             .build();
 
@@ -41,8 +43,8 @@ public class UserService {
         return user;
     }
 
-     public UserEntity getUser(Long id) {
-        return this.userRepository.findById(id).orElseThrow(() ->
+     public UserEntity getUser(String registration) {
+        return this.userRepository.findByRegistration(registration).orElseThrow(() ->
             new ResourceNotFoundException("Fiscal não encontrado."));
      }
 
@@ -54,17 +56,18 @@ public class UserService {
         ).toList();
      }
 
-     public UserEntity updateUser(Long id, RequestUpdateUserDTO dto) {
-        UserEntity user = this.userRepository.findById(id).orElseThrow(() ->
+     public UserEntity updateUser(String registration, RequestUpdateUserDTO dto) {
+        UserEntity user = this.userRepository.findByRegistration(registration).orElseThrow(() ->
             new ResourceNotFoundException("Fiscal não encontrado."));
 
+        String encryptedPassword = new BCryptPasswordEncoder().encode(dto.password());
         user.setPhoneNumber(dto.phoneNumber());
-        user.setPassword(dto.password());
+        user.setPassword(encryptedPassword);
         return this.userRepository.save(user);
      }
 
-     public void deleteUser(Long id) {
-         UserEntity user = this.userRepository.findById(id).orElseThrow(() ->
+     public void deleteUser(String registration) {
+         UserEntity user = this.userRepository.findByRegistration(registration).orElseThrow(() ->
              new ResourceNotFoundException("Fiscal não encontrado."));
 
          this.userRepository.delete(user);
