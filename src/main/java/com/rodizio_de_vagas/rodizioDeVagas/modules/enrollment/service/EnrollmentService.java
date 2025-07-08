@@ -19,6 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import java.nio.file.AccessDeniedException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -48,13 +49,13 @@ public class EnrollmentService {
      * Atualiza a resposta do fiscal (aceitar ou recusar) e o move para o final da fila.
      *
      * @param workId   id do trabalho
-     * @param userId   id do fiscal
+     * @param registration   matrícula do fiscal
      * @param accepted se aceitou ou recusou o trabalho
      */
     @Transactional
-    public void respondToEnrollment(Long workId, Long userId, boolean accepted) {
-        EnrollmentEntity enrollment = this.enrollmentRepository.findByWorkEntityIdAndUserEntityIdAndSubscriptionStatus(
-                workId, userId, SubscriptionStatus.WAITING)
+    public void respondToEnrollment(Long workId, String registration, boolean accepted) {
+        EnrollmentEntity enrollment = this.enrollmentRepository.findByWorkEntityIdAndUserEntityRegistrationAndSubscriptionStatus(
+                workId, registration, SubscriptionStatus.WAITING)
             .orElseThrow(() -> new ResourceNotFoundException("Inscrição pendente não encontrada."));
 
         if (enrollment.getSubscriptionStatus() != SubscriptionStatus.WAITING) {
@@ -191,9 +192,13 @@ public class EnrollmentService {
      * @param enrollmentId id da inscrição
      */
     @Transactional
-    public void cancelEnrollment(Long enrollmentId) {
+    public void cancelEnrollment(Long enrollmentId, String registration) throws AccessDeniedException {
         EnrollmentEntity enrollment = this.enrollmentRepository.findById(enrollmentId).orElseThrow(() ->
             new ResourceNotFoundException("Inscrição não encontrada"));
+
+        if (!enrollment.getUserEntity().getRegistration().equals(registration)) {
+            throw new AccessDeniedException("Você não tem permissão para cancelar esta inscrição.");
+        }
 
         enrollment.setSubscriptionStatus(SubscriptionStatus.CANCELLED);
         this.enrollmentRepository.save(enrollment);
