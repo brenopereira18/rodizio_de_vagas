@@ -41,11 +41,9 @@ public class TokenProvider {
         } catch (JWTVerificationException e) {
             return "";
         }
-
     }
 
     private Instant genExpirationDate() {
         return Instant.now().plus(Duration.ofDays(7));
     }
-
 }
