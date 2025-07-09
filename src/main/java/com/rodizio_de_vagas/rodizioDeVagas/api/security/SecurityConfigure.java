@@ -1,4 +1,4 @@
-package com.rodizio_de_vagas.rodizioDeVagas.security;
+package com.rodizio_de_vagas.rodizioDeVagas.api.security;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -25,10 +25,18 @@ public class SecurityConfigure {
     public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
         return httpSecurity
             .csrf(csrf -> csrf.disable())
-            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(authorize -> authorize
-                .requestMatchers(HttpMethod.POST, "/auth/login").permitAll()
+                .requestMatchers("/css/**", "/js/**", "/images/**").permitAll()               .requestMatchers(HttpMethod.POST, "/auth/login").permitAll()
+                .requestMatchers(HttpMethod.GET, "/fiscal/login").permitAll()
                 .anyRequest().authenticated()
+            ).formLogin(form -> form
+                .loginPage("/fiscal/login")
+                .loginProcessingUrl("/fiscal/login")
+                .usernameParameter("matricula")
+                .passwordParameter("senha")
+                .defaultSuccessUrl("/servicos", true)
+                .failureUrl("/fiscal/login?error=true")
+                .permitAll()
             )
             .addFilterBefore(securityFilter, UsernamePasswordAuthenticationFilter.class)
             .build();
