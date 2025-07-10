@@ -4,6 +4,7 @@ import com.rodizio_de_vagas.rodizioDeVagas.api.exceptions.EntityAlreadyExistsExc
 import com.rodizio_de_vagas.rodizioDeVagas.api.exceptions.ResourceNotFoundException;
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.WorkCategoryPreference.service.WorkCategoryPreferenceService;
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.user.entity.UserEntity;
+import com.rodizio_de_vagas.rodizioDeVagas.api.modules.user.entity.UserRole;
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.user.entity.dto.RequestCreateUserDTO;
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.user.entity.dto.RequestUpdateUserDTO;
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.user.entity.dto.ResponseManagerDTO;
@@ -49,7 +50,7 @@ public class UserService {
      }
 
      public List<ResponseManagerDTO> getAllManagers() {
-        List<UserEntity> managers = this.userRepository.findByUserRole("SUPERVISOR");
+        List<UserEntity> managers = this.userRepository.findByUserRole(UserRole.SUPERVISOR);
 
         return managers.stream().map(
             s -> new ResponseManagerDTO(s.getId(), s.getFullName())
