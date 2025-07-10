@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:fragment="layout(content)">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${pageTitle}"></title>
+    <link rel="stylesheet" th:href="@{/css/output.css}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@700&display=swap" rel="stylesheet">
+    <script th:src="@{/js/ajax-content.js}" defer></script>
+</head>
+<body class="text-slate-600">
+<div class="flex h-screen">
+    <nav class="w-64 bg-slate-200 p-4">
+        <img class="mb-16" th:src="@{/images/logo.png}" alt="Logo da prefeitura">
+        <ul>
+            <li>
+                <a href="#" th:href="@{/home/servicos}"
+                   class="flex items-center w-full py-2 px-4 rounded-md hover:bg-emerald-300">
+                    <img th:src="@{/images/servico.svg}" alt="Ícone" class="mr-2">
+                    <span>Serviços</span>
+                </a>
+            </li>
+            <li>
+                <a href="#" th:href="@{/home/fiscais}"
+                   class="flex items-center w-full py-2 px-4 rounded-md hover:bg-emerald-300">
+                    <img th:src="@{/images/users.svg}" alt="Ícone" class="mr-2">
+                    <span>Fiscais/Supervisores</span>
+                </a>
+            </li>
+            <li>
+                <a href="#" th:href="@{/home/inscricoes}"
+                   class="flex items-center w-full py-2 px-4 rounded-md hover:bg-emerald-300">
+                    <img th:src="@{/images/inscricoes.svg}" alt="Ícone" class="mr-2">
+                    <span>Inscrições</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+
+    <main class="flex-1 p-6 overflow-auto" id="content">
+        <!-- Conteúdo inicial -->
+        <div th:replace="${content}"></div>
+    </main>
+</div>
+</body>
+</html>
