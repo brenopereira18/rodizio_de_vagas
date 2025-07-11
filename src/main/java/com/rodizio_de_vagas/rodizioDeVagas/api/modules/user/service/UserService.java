@@ -3,12 +3,15 @@ package com.rodizio_de_vagas.rodizioDeVagas.api.modules.user.service;
 import com.rodizio_de_vagas.rodizioDeVagas.api.exceptions.EntityAlreadyExistsException;
 import com.rodizio_de_vagas.rodizioDeVagas.api.exceptions.ResourceNotFoundException;
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.WorkCategoryPreference.service.WorkCategoryPreferenceService;
+import com.rodizio_de_vagas.rodizioDeVagas.api.modules.priorityQueue.repository.PriorityQueueRepository;
+import com.rodizio_de_vagas.rodizioDeVagas.api.modules.priorityQueue.service.PriorityQueueService;
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.user.entity.UserEntity;
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.user.entity.UserRole;
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.user.entity.dto.RequestCreateUserDTO;
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.user.entity.dto.RequestUpdateUserDTO;
-import com.rodizio_de_vagas.rodizioDeVagas.api.modules.user.entity.dto.ResponseManagerDTO;
+import com.rodizio_de_vagas.rodizioDeVagas.api.modules.user.entity.dto.ResponseUserDTO;
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.user.repository.UserRepository;
+import com.rodizio_de_vagas.rodizioDeVagas.api.modules.work.entity.Category;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -22,12 +25,23 @@ public class UserService {
     private UserRepository userRepository;
 
     @Autowired
+    private PriorityQueueService priorityQueueService;
+
+    @Autowired
+    private PriorityQueueRepository priorityQueueRepository;
+
+    @Autowired
     private WorkCategoryPreferenceService workCategoryPreferenceService;
 
     public UserEntity createUser(RequestCreateUserDTO userDTO) {
         this.userRepository.findByRegistration(userDTO.registration())
             .ifPresent(u -> {
                 throw new EntityAlreadyExistsException("Fiscal já cadastrado.");
+            });
+
+        this.userRepository.findByPhoneNumber(userDTO.phoneNumber())
+            .ifPresent(u -> {
+                throw new EntityAlreadyExistsException("Telefone já cadastrado.");
             });
 
         String encryptedPassword = new BCryptPasswordEncoder().encode(userDTO.registration());
@@ -41,6 +55,12 @@ public class UserService {
 
         this.userRepository.save(user);
         this.workCategoryPreferenceService.createInitialPreferencesForUser(user);
+
+        if (user.getUserRole().equals(UserRole.FISCAL)) {
+            for (Category category : Category.values()) {
+                this.priorityQueueService.activateFiscalInCategory(user.getRegistration(), category);
+            }
+        }
         return user;
     }
 
@@ -49,11 +69,19 @@ public class UserService {
             new ResourceNotFoundException("Fiscal não encontrado."));
      }
 
-     public List<ResponseManagerDTO> getAllManagers() {
+     public List<ResponseUserDTO> getAllTax() {
+         List<UserEntity> tax = this.userRepository.findByUserRole(UserRole.FISCAL);
+
+         return tax.stream().map(
+             s -> new ResponseUserDTO(s.getId(), s.getFullName(), s.getRegistration(), s.getPhoneNumber())
+         ).toList();
+     }
+
+     public List<ResponseUserDTO> getAllManagers() {
         List<UserEntity> managers = this.userRepository.findByUserRole(UserRole.SUPERVISOR);
 
         return managers.stream().map(
-            s -> new ResponseManagerDTO(s.getId(), s.getFullName())
+            s -> new ResponseUserDTO(s.getId(), s.getFullName(), s.getRegistration(), s.getPhoneNumber())
         ).toList();
      }
 
@@ -71,6 +99,13 @@ public class UserService {
          UserEntity user = this.userRepository.findByRegistration(registration).orElseThrow(() ->
              new ResourceNotFoundException("Fiscal não encontrado."));
 
+         if (user.getUserRole().equals(UserRole.FISCAL)) {
+             for (Category category : Category.values()) {
+                 if (priorityQueueRepository.findByUserEntityRegistrationAndCategory(registration, category).isPresent()) {
+                     this.priorityQueueService.deactivateFiscalFromCategory(registration, category);
+                 }
+             }
+         }
          this.userRepository.delete(user);
      }
 }
