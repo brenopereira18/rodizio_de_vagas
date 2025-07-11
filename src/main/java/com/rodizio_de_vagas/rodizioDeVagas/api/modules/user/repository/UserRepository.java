@@ -10,6 +10,7 @@ import java.util.Optional;
 public interface UserRepository extends JpaRepository<UserEntity, Long> {
 
     Optional<UserEntity> findByRegistration(String registration);
+    Optional<UserEntity> findByPhoneNumber(String phoneNumber);
     List<UserEntity> findByUserRole(UserRole role);
     Optional<UserEntity> findById(Long id);
     List<UserEntity> findByUserRoleOrderByFullNameAsc(UserRole userRole);

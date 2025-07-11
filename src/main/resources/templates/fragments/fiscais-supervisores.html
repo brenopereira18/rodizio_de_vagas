@@ -1,14 +1,203 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: layout(~{::div})}">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" th:href="@{/css/output.css}">
-</head>
-<body>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: layout(~{::div})}">
 <div>
-    <h1>Conteúdo de fiscais</h1>
-    <p>Este é o conteúdo de inscrições.</p>
+    <div class="flex justify-between items-center mb-6 border-b-4 border-emerald-500 pb-2">
+        <h1 class="text-2xl font-bold text-slate-700">
+            Fiscais/Supervisores
+        </h1>
+        <div>
+            <button
+                    type="button"
+                    onclick="document.getElementById('modal-servico').classList.remove('hidden')"
+                    class="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded shadow"
+            >
+                <div class="flex">
+                    <img th:src="@{/images/user-plus.svg}" alt="Ícone" class="mr-2">
+                    Novo Usuário
+                </div>
+            </button>
+            <button
+                    type="button"
+                    onclick="document.getElementById('modal-deletar').classList.remove('hidden')"
+                    class="bg-red-400 hover:bg-red-500 text-white px-4 py-2 rounded shadow ml-2"
+            >
+                <div class="flex">
+                    <img th:src="@{/images/user-minus.svg}" alt="Ícone" class="mr-2">
+                    Excluir Usuário
+                </div>
+            </button>
+        </div>
+    </div>
+
+    <!-- Botões para alternar -->
+    <div class="flex gap-4 mb-8">
+        <button onclick="mostrarTabela('fiscais')"
+                class="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded">Fiscais
+        </button>
+        <button onclick="mostrarTabela('supervisores')"
+                class="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded">Supervisores
+        </button>
+        <button onclick="mostrarTabela('prioridade')"
+                class="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded">
+            Lista de Prioridade
+        </button>
+    </div>
+
+    <div th:if="${success}" class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
+        <p th:text="${success}"></p>
+    </div>
+    <div th:if="${error}" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+        <p th:text="${error}"></p>
+    </div>
+
+    <!-- Tabela de Fiscais -->
+    <div id="tabela-fiscais" class="">
+        <h2 class="text-lg font-bold mb-2">Lista de Fiscais</h2>
+        <div class="overflow-auto max-h-[60vh]">
+            <table class="table-auto w-full border border-slate-300 mb-6">
+                <thead class="bg-slate-100">
+                <tr>
+                    <th class="border px-4 py-2 text-left">Nome</th>
+                    <th class="border px-4 py-2 text-left">Matrícula</th>
+                    <th class="border px-4 py-2 text-left">Telefone</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="f : ${fiscais}">
+                    <td class="border px-4 py-2" th:text="${f.fullName}"></td>
+                    <td class="border px-4 py-2" th:text="${f.registration}"></td>
+                    <td class="border px-4 py-2" th:text="${f.phoneNumber}"></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Tabela de Supervisores -->
+    <div id="tabela-supervisores" class="hidden">
+        <h2 class="text-lg font-bold mb-2">Lista de Supervisores</h2>
+        <div class="overflow-auto max-h-[60vh]">
+            <table class="table-auto w-full border border-slate-300">
+                <thead class="bg-slate-100">
+                <tr>
+                    <th class="border px-4 py-2 text-left">Nome</th>
+                    <th class="border px-4 py-2 text-left">Matrícula</th>
+                    <th class="border px-4 py-2 text-left">Telefone</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="s : ${supervisores}">
+                    <td class="border px-4 py-2" th:text="${s.fullName}"></td>
+                    <td class="border px-4 py-2" th:text="${s.registration}"></td>
+                    <td class="border px-4 py-2" th:text="${s.phoneNumber}"></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Lista de prioridade -->
+    <div id="tabela-prioridade" class="hidden">
+        <h2 class="text-lg font-bold mb-4">Filas de Prioridade por Categoria</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div th:each="entry : ${filasPrioridade}">
+                <div class="border rounded p-4 shadow">
+                    <h3 class="text-md font-semibold mb-4 text-center" th:text="${entry.key}">Categoria</h3>
+                    <table class="table-auto w-full border border-slate-300">
+                        <thead class="bg-slate-100">
+                        <tr>
+                            <th class="border px-4 py-2 text-left">Nome</th>
+                            <th class="border px-4 py-2 text-left">Posição</th>
+                        </tr>
+                        </thead>
+                        <tbody class="text-xs">
+                        <tr th:each="fiscal : ${entry.value}">
+                            <td class="border px-4 py-2" th:text="${fiscal.userEntity.fullName}">Nome</td>
+                            <td class="border px-4 py-2" th:text="${fiscal.positionInLine}">Posição</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para criar novo fiscal -->
+    <div id="modal-servico" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+        <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
+            <h2 class="text-xl font-bold mb-4">Novo Fiscal/Supervisor</h2>
+            <form th:action="@{/home/fiscais}" method="post" class="flex flex-col gap-4">
+                <input type="text" name="fullName" placeholder="Nome completo" required
+                       class="border border-slate-300 rounded px-3 py-2 w-full"/>
+                <input type="text" name="registration" placeholder="Matrícula" required
+                       class="border border-slate-300 rounded px-3 py-2 w-full"/>
+                <input type="tel" name="phoneNumber" placeholder="Telefone" required
+                       class="border border-slate-300 rounded px-3 py-2 w-full"/>
+                <select name="userRole" required
+                        class="border border-slate-300 rounded px-3 py-2 w-full">
+                    <option value="">Selecione uma função</option>
+                    <option th:each="funcao : ${funcoes}"
+                            th:value="${funcao.name()}"
+                            th:text="${funcao.userRole}">
+                    </option>
+                </select>
+                <div class="flex justify-end gap-2">
+                    <button type="button"
+                            onclick="document.getElementById('modal-servico').classList.add('hidden')"
+                            class="px-4 py-2 rounded bg-gray-300 hover:bg-gray-400 text-slate-700">
+                        Cancelar
+                    </button>
+                    <button type="submit"
+                            class="px-4 py-2 rounded bg-emerald-500 hover:bg-emerald-600 text-white">
+                        Criar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal de exclusão -->
+    <div id="modal-deletar" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+        <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
+            <h2 class="text-xl font-bold mb-4">Excluir Fiscal/Supervisor</h2>
+            <form th:action="@{/home/fiscais/deletar}" method="post" class="flex flex-col gap-4">
+                <input type="text" name="registration" placeholder="Digite a matrícula para excluir" required
+                       class="border border-slate-300 rounded px-3 py-2 w-full"/>
+
+                <div class="flex justify-end gap-2">
+                    <button type="button"
+                            onclick="document.getElementById('modal-deletar').classList.add('hidden')"
+                            class="px-4 py-2 rounded bg-gray-300 hover:bg-gray-400 text-slate-700">
+                        Cancelar
+                    </button>
+                    <button type="submit"
+                            class="px-4 py-2 rounded bg-red-500 hover:bg-red-600 text-white">
+                        Confirmar Exclusão
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function mostrarTabela(tipo) {
+            const fiscais = document.getElementById("tabela-fiscais");
+            const supervisores = document.getElementById("tabela-supervisores");
+            const prioridade = document.getElementById("tabela-prioridade");
+
+            fiscais.classList.add("hidden");
+            supervisores.classList.add("hidden");
+            prioridade.classList.add("hidden");
+
+            if (tipo === "fiscais") {
+                fiscais.classList.remove("hidden");
+            } else if (tipo === "supervisores") {
+                supervisores.classList.remove("hidden");
+            } else if (tipo === "prioridade") {
+                prioridade.classList.remove("hidden");
+            }
+        }
+    </script>
 </div>
-</body>
 </html>

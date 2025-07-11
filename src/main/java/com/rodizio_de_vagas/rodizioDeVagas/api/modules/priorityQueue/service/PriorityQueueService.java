@@ -13,6 +13,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 public class PriorityQueueService {
@@ -114,4 +116,11 @@ public class PriorityQueueService {
         this.priorityQueueRepository.save(queue);
         this.priorityQueueRepository.flush(); // Garante persistência final
     }
+
+    public Map<Category, List<PriorityQueueEntity>> getAllQueuesGroupedByCategory() {
+        List<PriorityQueueEntity> allQueues = priorityQueueRepository.findAll();
+        return allQueues.stream()
+            .collect(Collectors.groupingBy(PriorityQueueEntity::getCategory));
+    }
+
 }

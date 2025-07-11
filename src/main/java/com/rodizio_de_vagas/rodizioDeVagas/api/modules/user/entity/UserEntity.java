@@ -41,7 +41,6 @@ public class UserEntity implements UserDetails {
 
     @Column(name = "senha", nullable = false)
     @NotBlank
-    @Size(min = 6, max = 12, message = "A senha deve ter de 6 a 12 caracteres")
     private String password;
 
     @Column(name = "telefone", nullable = false, unique = true)
