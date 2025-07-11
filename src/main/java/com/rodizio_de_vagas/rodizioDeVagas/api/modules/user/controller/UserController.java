@@ -3,7 +3,7 @@ package com.rodizio_de_vagas.rodizioDeVagas.api.modules.user.controller;
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.user.entity.UserEntity;
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.user.entity.dto.RequestCreateUserDTO;
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.user.entity.dto.RequestUpdateUserDTO;
-import com.rodizio_de_vagas.rodizioDeVagas.api.modules.user.entity.dto.ResponseManagerDTO;
+import com.rodizio_de_vagas.rodizioDeVagas.api.modules.user.entity.dto.ResponseUserDTO;
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.user.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,9 +37,16 @@ public class UserController {
 
     @PreAuthorize("hasRole('ADMINISTRADOR')")
     @GetMapping("/managers")
-    public ResponseEntity<List<ResponseManagerDTO>> getAllManagers() {
-        List<ResponseManagerDTO> managers = this.userService.getAllManagers();
+    public ResponseEntity<List<ResponseUserDTO>> getAllManagers() {
+        List<ResponseUserDTO> managers = this.userService.getAllManagers();
         return ResponseEntity.ok(managers);
+    }
+
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
+    @GetMapping("/tax")
+    public ResponseEntity<List<ResponseUserDTO>> getAllTax() {
+        List<ResponseUserDTO> tax = this.userService.getAllTax();
+        return ResponseEntity.ok(tax);
     }
 
     @PutMapping("/profile")
