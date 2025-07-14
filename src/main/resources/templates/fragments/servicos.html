@@ -1,11 +1,5 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: layout(~{::div})}">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" th:href="@{/css/output.css}">
-</head>
-<body>
 <div>
 
     <!-- Título e botão -->
@@ -25,9 +19,48 @@
 
     <!-- Lista de serviços -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        <div th:each="servico : ${servicos}" class="bg-white p-4 rounded shadow">
-            <h2 class="text-lg font-semibold text-slate-800" th:text="${servico.nome}">Nome do Serviço</h2>
-            <p class="text-sm text-slate-600 mt-2" th:text="${servico.descricao}">Descrição do serviço.</p>
+        <div th:each="servico : ${servicos}" class="bg-slate-200 p-6 rounded-2xl shadow-lg border border-slate-300 hover:shadow-xl transition-shadow duration-300 ease-in-out">
+            <h2 class="text-lg font-semibold text-slate-800" th:text="${servico.title}">Nome do Serviço</h2>
+            <p class="text-sm text-slate-600" th:text="'Local: ' + ${servico.location}"></p>
+            <p class="text-sm text-slate-600"
+               th:text="'Data: ' + ${#temporals.format(servico.serviceDate, 'dd/MM/yyyy  - HH:mm')}"></p>
+            <p class="text-sm text-slate-600" th:text="'Supervisor: ' + ${servico.manager.fullName}"></p>
+            <p class="text-sm text-slate-600" th:text="'Categoria: ' + ${servico.category.category}"></p>
+            <p class="text-sm text-slate-600" th:text="'Vagas: ' + ${servico.numberOfVacancies}"></p>
+
+            <!-- Botões para Fiscal -->
+            <div th:if="${usuario.userRole.name() == 'FISCAL'}" class="mt-4 flex gap-2 text-sm">
+                <form th:action="@{'/inscricoes/inscrever/' + ${servico.id}}" method="post">
+                    <button type="submit" class="bg-emerald-500 text-white px-4 py-2 rounded">Inscrever-se</button>
+                </form>
+                <form th:action="@{'/inscricoes/recusar/' + ${servico.id}}" method="post">
+                    <button type="submit" class="bg-red-500 text-white px-4 py-2 rounded">Recusar</button>
+                </form>
+            </div>
+
+            <!-- Botões para Administrador -->
+            <div th:if="${usuario.userRole.name() == 'ADMINISTRADOR'}" class="mt-4 flex gap-2 text-sm">
+                <button
+                        type="button"
+                        class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded"
+                        th:data-id="${servico.id}"
+                        th:data-title="${servico.title}"
+                        th:data-location="${servico.location}"
+                        th:data-serviceDate="${#temporals.format(servico.serviceDate, 'yyyy-MM-dd''T''HH:mm')}"
+                        th:data-managerId="${servico.manager.id}"
+                        th:data-category="${servico.category.name()}"
+                        th:data-vacancies="${servico.numberOfVacancies}"
+                        onclick="abrirModalEdicaoComDataset(this)">
+                    Editar
+                </button>
+
+                <form th:action="@{/home/servicos/deletar}" method="post"
+                      onsubmit="return confirm('Tem certeza que deseja excluir este serviço?');">
+                    <input type="hidden" name="id" th:value="${servico.id}" />
+                    <button type="submit" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded">Excluir</button>
+                </form>
+
+            </div>
         </div>
     </div>
 
@@ -35,14 +68,14 @@
     <div id="modal-servico" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
         <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
             <h2 class="text-xl font-bold mb-4">Novo Serviço</h2>
-            <form th:action="@{/servicos/criar}" method="post" class="flex flex-col gap-4">
-                <input type="text" name="titulo" placeholder="Título" required
-                       class="border border-slate-300 rounded px-3 py-2 w-full" />
-                <input type="text" name="local" placeholder="Local" required
-                       class="border border-slate-300 rounded px-3 py-2 w-full" />
-                <input type="datetime-local" name="data" placeholder="Data" required
-                       class="border border-slate-300 rounded px-3 py-2 w-full" />
-                <select name="supervisor" required
+            <form th:action="@{/home/servicos}" method="post" class="flex flex-col gap-4">
+                <input type="text" name="title" placeholder="Título" required
+                       class="border border-slate-300 rounded px-3 py-2 w-full"/>
+                <input type="text" name="location" placeholder="Local" required
+                       class="border border-slate-300 rounded px-3 py-2 w-full"/>
+                <input type="datetime-local" name="serviceDate" placeholder="Data" required
+                       class="border border-slate-300 rounded px-3 py-2 w-full"/>
+                <select name="managerId" required
                         class="border border-slate-300 rounded px-3 py-2 w-full">
                     <option value="">Selecione um supervisor</option>
                     <option th:each="supervisor : ${supervisores}"
@@ -50,7 +83,7 @@
                             th:text="${supervisor.fullName}">
                     </option>
                 </select>
-                <select name="categoria" required
+                <select name="category" required
                         class="border border-slate-300 rounded px-3 py-2 w-full">
                     <option value="">Selecione uma categoria</option>
                     <option th:each="categoria : ${categorias}"
@@ -58,8 +91,8 @@
                             th:text="${categoria.category}">
                     </option>
                 </select>
-                <input type="number" name="numero-de-vagas" placeholder="Número de Vagas" required
-                       class="border border-slate-300 rounded px-3 py-2 w-full" />
+                <input type="number" name="numberOfVacancies" placeholder="Número de Vagas" required
+                       class="border border-slate-300 rounded px-3 py-2 w-full"/>
 
                 <div class="flex justify-end gap-2">
                     <button type="button"
@@ -76,6 +109,65 @@
         </div>
     </div>
 
+    <!-- Modal de Edição -->
+    <div id="modal-editar-servico"
+         class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+        <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
+            <h2 class="text-xl font-bold mb-4">Editar Serviço</h2>
+            <form id="form-editar-servico" th:action="@{/home/servicos/atualizar}" method="post" class="flex flex-col gap-4">
+                <input type="hidden" name="id" id="edit-id"/>
+                <input type="text" name="title" id="edit-title" placeholder="Título" required
+                       class="border border-slate-300 rounded px-3 py-2 w-full"/>
+                <input type="text" name="location" id="edit-location" placeholder="Local" required
+                       class="border border-slate-300 rounded px-3 py-2 w-full"/>
+                <input type="datetime-local" name="serviceDate" id="edit-serviceDate" placeholder="Data" required
+                       class="border border-slate-300 rounded px-3 py-2 w-full"/>
+                <select name="managerId" id="edit-managerId" required
+                        class="border border-slate-300 rounded px-3 py-2 w-full">
+                    <option th:each="supervisor : ${supervisores}"
+                            th:value="${supervisor.id}"
+                            th:text="${supervisor.fullName}">
+                    </option>
+                </select>
+                <select name="category" id="edit-category" required
+                        class="border border-slate-300 rounded px-3 py-2 w-full">
+                    <option th:each="categoria : ${categorias}"
+                            th:value="${categoria.name()}"
+                            th:text="${categoria.category}">
+                    </option>
+                </select>
+                <input type="number" name="numberOfVacancies" id="edit-numberOfVacancies" placeholder="Número de Vagas"
+                       required
+                       class="border border-slate-300 rounded px-3 py-2 w-full"/>
+
+                <div class="flex justify-end gap-2">
+                    <button type="button"
+                            onclick="document.getElementById('modal-editar-servico').classList.add('hidden')"
+                            class="px-4 py-2 rounded bg-gray-300 hover:bg-gray-400 text-slate-700">
+                        Cancelar
+                    </button>
+                    <button type="submit"
+                            class="px-4 py-2 rounded bg-emerald-500 hover:bg-emerald-600 text-white">
+                        Atualizar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function abrirModalEdicaoComDataset(button) {
+            document.getElementById('edit-id').value = button.dataset.id;
+            document.getElementById('edit-title').value = button.dataset.title;
+            document.getElementById('edit-location').value = button.dataset.location;
+            document.getElementById('edit-serviceDate').value = button.dataset.servicedate;
+            document.getElementById('edit-managerId').value = button.dataset.managerid;
+            document.getElementById('edit-category').value = button.dataset.category;
+            document.getElementById('edit-numberOfVacancies').value = button.dataset.vacancies;
+
+            document.getElementById('modal-editar-servico').classList.remove('hidden');
+        }
+    </script>
+
 </div>
-</body>
 </html>
