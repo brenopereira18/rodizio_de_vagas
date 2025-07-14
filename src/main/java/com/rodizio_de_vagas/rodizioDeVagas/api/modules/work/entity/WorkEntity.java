@@ -1,6 +1,9 @@
 package com.rodizio_de_vagas.rodizioDeVagas.api.modules.work.entity;
 
+import com.rodizio_de_vagas.rodizioDeVagas.api.modules.enrollment.entity.EnrollmentEntity;
+import com.rodizio_de_vagas.rodizioDeVagas.api.modules.notification.entity.NotificationEntity;
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.user.entity.UserEntity;
+import com.rodizio_de_vagas.rodizioDeVagas.api.modules.work.entity.validation.OnCreate;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.NotBlank;
@@ -11,6 +14,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Data
@@ -33,7 +37,7 @@ public class WorkEntity {
     private String location;
 
     @Column(name = "data_do_servico", nullable = false)
-    @Future(message = "A data do serviço ainda não pode ter ocorrido")
+    @Future(message = "A data do serviço ainda não pode ter ocorrido", groups = OnCreate.class)
     @NotNull
     private LocalDateTime serviceDate;
 
@@ -42,7 +46,7 @@ public class WorkEntity {
     private UserEntity manager;
 
     @Column(name = "data_limite_de_inscricao", nullable = false)
-    @Future()
+    @Future(groups = OnCreate.class)
     @NotNull
     private LocalDateTime registrationLimit;
 
@@ -54,6 +58,12 @@ public class WorkEntity {
     @Column(name = "numero_de_vagas", nullable = false)
     @NotNull
     private Integer numberOfVacancies;
+
+    @OneToMany(mappedBy = "workEntity", cascade = CascadeType.REMOVE, orphanRemoval = true)
+    private List<EnrollmentEntity> enrollments;
+
+    @OneToMany(mappedBy = "workEntity", cascade = CascadeType.REMOVE, orphanRemoval = true)
+    private List<NotificationEntity> notificacoes;
 
     @Enumerated(EnumType.STRING)
     @NotNull

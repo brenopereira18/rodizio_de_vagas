@@ -1,12 +1,13 @@
 package com.rodizio_de_vagas.rodizioDeVagas.api.modules.work.controller;
 
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.work.entity.WorkEntity;
-import com.rodizio_de_vagas.rodizioDeVagas.api.modules.work.entity.dto.RequestCreateWorkDTO;
+import com.rodizio_de_vagas.rodizioDeVagas.api.modules.work.entity.dto.RequestCreateOrUpdateWorkDTO;
+import com.rodizio_de_vagas.rodizioDeVagas.api.modules.work.entity.validation.OnCreate;
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.work.service.WorkService;
-import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -20,8 +21,15 @@ public class WorkController {
 
     @PreAuthorize("hasRole('ADMINISTRADOR')")
     @PostMapping
-    public ResponseEntity<WorkEntity> createWork(@Valid @RequestBody RequestCreateWorkDTO dto) {
+    public ResponseEntity<WorkEntity> createWork(@Validated(OnCreate.class) @RequestBody RequestCreateOrUpdateWorkDTO dto) {
         WorkEntity work = this.workService.createWork(dto);
+        return ResponseEntity.ok().body(work);
+    }
+
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
+    @PutMapping
+    public ResponseEntity<WorkEntity> updateWork(@RequestBody RequestCreateOrUpdateWorkDTO dto) {
+        WorkEntity work = this.workService.updateWork(dto);
         return ResponseEntity.ok().body(work);
     }
 
