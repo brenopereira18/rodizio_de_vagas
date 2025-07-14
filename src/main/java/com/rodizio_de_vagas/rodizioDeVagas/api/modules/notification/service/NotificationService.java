@@ -92,6 +92,6 @@ public class NotificationService {
             .build();
 
         this.enrollmentRepository.save(enrollment);
-        this.whatsappNotificationService.sendMessage(tax.getPhoneNumber(), notification.getMessage());
+        // this.whatsappNotificationService.sendMessage(tax.getPhoneNumber(), notification.getMessage());
     }
 }
