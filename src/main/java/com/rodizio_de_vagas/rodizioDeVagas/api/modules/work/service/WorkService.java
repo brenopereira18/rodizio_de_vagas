@@ -8,13 +8,14 @@ import com.rodizio_de_vagas.rodizioDeVagas.api.modules.user.entity.UserEntity;
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.user.repository.UserRepository;
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.work.entity.WorkEntity;
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.work.entity.WorkStatus;
-import com.rodizio_de_vagas.rodizioDeVagas.api.modules.work.entity.dto.RequestCreateWorkDTO;
+import com.rodizio_de_vagas.rodizioDeVagas.api.modules.work.entity.dto.RequestCreateOrUpdateWorkDTO;
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.work.repository.WorkRepository;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -32,7 +33,7 @@ public class WorkService {
     @Autowired
     private EnrollmentRepository enrollmentRepository;
 
-    public WorkEntity createWork(RequestCreateWorkDTO dto) {
+    public WorkEntity createWork(RequestCreateOrUpdateWorkDTO dto) {
         UserEntity manager = this.userRepository.findById(dto.managerId()).orElseThrow(() ->
             new ResourceNotFoundException("Supervisor não encontrado."));
 
@@ -52,16 +53,37 @@ public class WorkService {
     }
 
     public List<WorkEntity> getAllWorks(String status) {
+        this.updateExpiredWorksToFree();
         List<WorkEntity> works;
 
         if (status.equalsIgnoreCase("DISPONIVEIS")) {
-            works = this.workRepository.findByWorkStatusIn(List.of(WorkStatus.OPEN, WorkStatus.FREE));
+            works = this.workRepository.findByWorkStatusInAndServiceDateAfter(
+                List.of(WorkStatus.OPEN, WorkStatus.FREE),
+                LocalDateTime.now());
         } else if (status.equalsIgnoreCase("ENCERRADAS")) {
             works = this.workRepository.findByWorkStatus(WorkStatus.CLOSED);
         } else {
             throw new IllegalArgumentException("Filtro de status inválido.");
         }
         return works;
+    }
+
+    public WorkEntity updateWork(RequestCreateOrUpdateWorkDTO dto) {
+        WorkEntity work = workRepository.findById(dto.id())
+            .orElseThrow(() -> new ResourceNotFoundException("Serviço não encontrado."));
+
+        UserEntity manager = userRepository.findById(dto.managerId())
+            .orElseThrow(() -> new ResourceNotFoundException("Supervisor não encontrado."));
+
+        work.setTitle(dto.title());
+        work.setLocation(dto.location());
+        work.setServiceDate(dto.serviceDate());
+        work.setRegistrationLimit(dto.serviceDate().minusDays(1));
+        work.setManager(manager);
+        work.setCategory(dto.category());
+        work.setNumberOfVacancies(dto.numberOfVacancies());
+
+        return workRepository.save(work);
     }
 
     public void deleteWork(Long id) {
@@ -78,6 +100,11 @@ public class WorkService {
         List<WorkEntity> works = this.workRepository.findExpiredWorks();
 
         for (WorkEntity work : works) {
+            if (work.getServiceDate().isBefore(LocalDateTime.now())) {
+                work.setWorkStatus(WorkStatus.CLOSED);
+                continue;
+            }
+
             int totalEnrollments = enrollmentRepository.countByWorkEntityAndSubscriptionStatus(work, SubscriptionStatus.ACCEPTED);
 
             if (totalEnrollments < work.getNumberOfVacancies()) {
