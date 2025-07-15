@@ -11,7 +11,7 @@
         <button
                 type="button"
                 onclick="document.getElementById('modal-servico').classList.remove('hidden')"
-                class="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded shadow"
+                class="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded shadow text-sm"
         >
             + Novo Serviço
         </button>
@@ -31,10 +31,10 @@
             <!-- Botões para Fiscal -->
             <div th:if="${usuario.userRole.name() == 'FISCAL'}" class="mt-4 flex gap-2 text-sm">
                 <form th:action="@{'/inscricoes/inscrever/' + ${servico.id}}" method="post">
-                    <button type="submit" class="bg-emerald-500 text-white px-4 py-2 rounded">Inscrever-se</button>
+                    <button type="submit" class="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded">Inscrever-se</button>
                 </form>
                 <form th:action="@{'/inscricoes/recusar/' + ${servico.id}}" method="post">
-                    <button type="submit" class="bg-red-500 text-white px-4 py-2 rounded">Recusar</button>
+                    <button type="submit" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded">Recusar</button>
                 </form>
             </div>
 
