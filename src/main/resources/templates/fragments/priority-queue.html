@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: layout(~{::div})}">
+<div>
+    <div class="flex justify-between items-center mb-6 border-b-4 border-emerald-500 pb-2">
+        <h1 class="text-2xl font-bold text-slate-700">
+            Fila de Prioridade por Categoria
+        </h1>
+    </div>
+
+    <!-- Botões de categoria -->
+    <div class="max-w-fit flex space-x-2 border-[3px] border-emerald-500 rounded-xl select-none mb-8 text-sm">
+        <label class="radio flex items-center justify-center rounded-lg p-1 cursor-pointer">
+            <input
+                    type="radio"
+                    name="categoria"
+                    value="EVENTO"
+                    class="peer hidden"
+                    checked
+                    onchange="mostrarFila(this.value)"
+            />
+            <span
+                    class="tracking-widest peer-checked:bg-gradient-to-r peer-checked:from-emerald-500 peer-checked:to-emerald-500 peer-checked:text-white text-gray-700 p-2 rounded-lg transition duration-150 ease-in-out"
+            >Evento</span>
+        </label>
+
+        <label class="radio flex items-center justify-center rounded-lg p-1 cursor-pointer">
+            <input
+                    type="radio"
+                    name="categoria"
+                    value="FEIRA"
+                    class="peer hidden"
+                    onchange="mostrarFila(this.value)"
+            />
+            <span
+                    class="tracking-widest peer-checked:bg-gradient-to-r peer-checked:from-emerald-500 peer-checked:to-emerald-500 peer-checked:text-white text-gray-700 p-2 rounded-lg transition duration-150 ease-in-out"
+            >Feira</span>
+        </label>
+
+        <label class="radio flex items-center justify-center rounded-lg p-1 cursor-pointer">
+            <input
+                    type="radio"
+                    name="categoria"
+                    value="AMBULANTE"
+                    class="peer hidden"
+                    onchange="mostrarFila(this.value)"
+            />
+            <span
+                    class="tracking-widest peer-checked:bg-gradient-to-r peer-checked:from-emerald-500 peer-checked:to-emerald-500 peer-checked:text-white text-gray-700 p-2 rounded-lg transition duration-150 ease-in-out"
+            >Ambulante</span>
+        </label>
+    </div>
+
+
+    <!-- Lista de prioridade -->
+    <div>
+        <div class="grid-cols-1">
+            <div th:each="entry : ${filasPrioridade}"
+                 th:id="'fila-' + ${entry.key.name()}"
+                 class="fila-prioridade"
+                 th:classappend="${entry.key.name() == 'EVENTO'} ? '' : ' hidden'">
+                <div class="border rounded p-4 shadow">
+                    <h3 class="text-md font-semibold mb-4 text-center" th:text="${entry.key}">Categoria</h3>
+                    <table class="table-auto w-full border border-slate-300">
+                        <thead class="bg-slate-100">
+                        <tr>
+                            <th class="border px-4 py-2 text-left">Nome</th>
+                            <th class="border px-4 py-2 text-left">Posição</th>
+                        </tr>
+                        </thead>
+                        <tbody class="text-xs">
+                        <tr th:each="fiscal : ${entry.value}">
+                            <td class="border px-4 py-2" th:text="${fiscal.userEntity.fullName}">Nome</td>
+                            <td class="border px-4 py-2" th:text="${fiscal.positionInLine}">Posição</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function mostrarFila(categoria) {
+            document.querySelectorAll('.fila-prioridade').forEach(el => {
+                el.classList.add('hidden');
+            });
+
+            const div = document.getElementById('fila-' + categoria);
+            if (div) {
+                div.classList.remove('hidden');
+            }
+        }
+    </script>
+
+</div>
+</html>
