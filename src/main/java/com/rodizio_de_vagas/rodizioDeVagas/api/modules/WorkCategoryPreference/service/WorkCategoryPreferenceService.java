@@ -43,6 +43,17 @@ public class WorkCategoryPreferenceService {
         }
     }
 
+    public void syncPreferences(String registration, List<Category> activeCategories) {
+        List<WorkCategoryPreferenceEntity> currentPreferences = workCategoryPreferenceRepository.findByUserEntityRegistration(registration);
+
+        for (WorkCategoryPreferenceEntity preference : currentPreferences) {
+            boolean shouldBeActive = activeCategories.contains(preference.getCategory());
+            updatePreference(registration, preference.getCategory(), shouldBeActive);
+        }
+    }
+
+
+
     public void createInitialPreferencesForUser(UserEntity user) {
         if (user.getUserRole() == UserRole.SUPERVISOR || user.getUserRole() == UserRole.ADMINISTRADOR ) {
             return;
