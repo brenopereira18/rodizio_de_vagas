@@ -36,7 +36,7 @@ public class UserWebController {
 
         Map<Category, List<PriorityQueueEntity>> queue = priorityQueueService.getAllQueuesGroupedByCategory();
         model.addAttribute("filasPrioridade", queue);
-        return "fragments/fiscais-supervisores";
+        return "fragments/tax-managers";
     }
 
     @PostMapping
