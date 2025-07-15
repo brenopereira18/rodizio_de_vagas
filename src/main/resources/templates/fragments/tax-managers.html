@@ -6,14 +6,14 @@
         <h1 class="text-2xl font-bold text-slate-700">
             Fiscais/Supervisores
         </h1>
-        <div>
+        <div class="text-sm">
             <button
                     type="button"
                     onclick="document.getElementById('modal-servico').classList.remove('hidden')"
                     class="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded shadow"
             >
                 <div class="flex">
-                    <img th:src="@{/images/user-plus.svg}" alt="Ícone" class="mr-2">
+                    <img th:src="@{/images/user-plus.svg}" alt="Ícone" class="mr-2 max-w-5">
                     Novo Usuário
                 </div>
             </button>
@@ -23,7 +23,7 @@
                     class="bg-red-400 hover:bg-red-500 text-white px-4 py-2 rounded shadow ml-2"
             >
                 <div class="flex">
-                    <img th:src="@{/images/user-minus.svg}" alt="Ícone" class="mr-2">
+                    <img th:src="@{/images/user-minus.svg}" alt="Ícone" class="mr-2 max-w-5">
                     Excluir Usuário
                 </div>
             </button>
@@ -31,17 +31,22 @@
     </div>
 
     <!-- Botões para alternar -->
-    <div class="flex gap-4 mb-8">
-        <button onclick="mostrarTabela('fiscais')"
-                class="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded">Fiscais
-        </button>
-        <button onclick="mostrarTabela('supervisores')"
-                class="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded">Supervisores
-        </button>
-        <button onclick="mostrarTabela('prioridade')"
-                class="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded">
-            Lista de Prioridade
-        </button>
+    <div class="max-w-fit flex justify-center mb-8">
+        <div class="inline-flex gap-2 border-[3px] border-emerald-500 rounded-xl select-none p-1 text-sm">
+            <label class="flex flex-grow items-center justify-center rounded-lg cursor-pointer">
+                <input type="radio" name="toggle" value="fiscais" class="peer hidden" checked
+                       onclick="mostrarTabela('fiscais')"/>
+                <span class="tracking-widest peer-checked:bg-gradient-to-r peer-checked:from-emerald-500 peer-checked:to-emerald-500 peer-checked:text-white text-gray-700 px-4 py-2 rounded-lg transition duration-150 ease-in-out"
+                >Fiscais</span>
+            </label>
+
+            <label class="flex flex-grow items-center justify-center rounded-lg cursor-pointer">
+                <input type="radio" name="toggle" value="supervisores" class="peer hidden"
+                       onclick="mostrarTabela('supervisores')"/>
+                <span class="tracking-widest peer-checked:bg-gradient-to-r peer-checked:from-emerald-500 peer-checked:to-emerald-500 peer-checked:text-white text-gray-700 px-4 py-2 rounded-lg transition duration-150 ease-in-out"
+                >Supervisores</span>
+            </label>
+        </div>
     </div>
 
     <div th:if="${success}" class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
@@ -63,7 +68,7 @@
                     <th class="border px-4 py-2 text-left">Telefone</th>
                 </tr>
                 </thead>
-                <tbody>
+                <tbody class="text-xs">
                 <tr th:each="f : ${fiscais}">
                     <td class="border px-4 py-2" th:text="${f.fullName}"></td>
                     <td class="border px-4 py-2" th:text="${f.registration}"></td>
@@ -86,7 +91,7 @@
                     <th class="border px-4 py-2 text-left">Telefone</th>
                 </tr>
                 </thead>
-                <tbody>
+                <tbody class="text-xs">
                 <tr th:each="s : ${supervisores}">
                     <td class="border px-4 py-2" th:text="${s.fullName}"></td>
                     <td class="border px-4 py-2" th:text="${s.registration}"></td>
@@ -94,32 +99,6 @@
                 </tr>
                 </tbody>
             </table>
-        </div>
-    </div>
-
-    <!-- Lista de prioridade -->
-    <div id="tabela-prioridade" class="hidden">
-        <h2 class="text-lg font-bold mb-4">Filas de Prioridade por Categoria</h2>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div th:each="entry : ${filasPrioridade}">
-                <div class="border rounded p-4 shadow">
-                    <h3 class="text-md font-semibold mb-4 text-center" th:text="${entry.key}">Categoria</h3>
-                    <table class="table-auto w-full border border-slate-300">
-                        <thead class="bg-slate-100">
-                        <tr>
-                            <th class="border px-4 py-2 text-left">Nome</th>
-                            <th class="border px-4 py-2 text-left">Posição</th>
-                        </tr>
-                        </thead>
-                        <tbody class="text-xs">
-                        <tr th:each="fiscal : ${entry.value}">
-                            <td class="border px-4 py-2" th:text="${fiscal.userEntity.fullName}">Nome</td>
-                            <td class="border px-4 py-2" th:text="${fiscal.positionInLine}">Posição</td>
-                        </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
         </div>
     </div>
 
@@ -184,18 +163,14 @@
         function mostrarTabela(tipo) {
             const fiscais = document.getElementById("tabela-fiscais");
             const supervisores = document.getElementById("tabela-supervisores");
-            const prioridade = document.getElementById("tabela-prioridade");
 
             fiscais.classList.add("hidden");
             supervisores.classList.add("hidden");
-            prioridade.classList.add("hidden");
 
             if (tipo === "fiscais") {
                 fiscais.classList.remove("hidden");
             } else if (tipo === "supervisores") {
                 supervisores.classList.remove("hidden");
-            } else if (tipo === "prioridade") {
-                prioridade.classList.remove("hidden");
             }
         }
     </script>

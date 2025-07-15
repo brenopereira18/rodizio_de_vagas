@@ -89,10 +89,16 @@ public class UserService {
         UserEntity user = this.userRepository.findByRegistration(registration).orElseThrow(() ->
             new ResourceNotFoundException("Fiscal não encontrado."));
 
-        String encryptedPassword = new BCryptPasswordEncoder().encode(dto.password());
         user.setPhoneNumber(dto.phoneNumber());
-        user.setPassword(encryptedPassword);
-        return this.userRepository.save(user);
+
+        if (dto.password() != null && !dto.password().isBlank()) {
+            String encryptedPassword = new BCryptPasswordEncoder().encode(dto.password());
+            user.setPassword(encryptedPassword);
+        }
+        this.userRepository.save(user);
+
+        this.workCategoryPreferenceService.syncPreferences(user.getRegistration(), dto.categorys());
+        return user;
      }
 
      public void deleteUser(String registration) {

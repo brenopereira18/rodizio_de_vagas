@@ -7,12 +7,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 
 @Controller
 @RequestMapping("/home/inscricoes")
-public class RegistrationController {
+public class RegistrationWebController {
 
     @GetMapping
     public String showRegistrations(Model model) {
         model.addAttribute("pageTitle", "Inscrições");
-        return "fragments/inscricoes";
+        return "fragments/enrollments";
     }
 }
 

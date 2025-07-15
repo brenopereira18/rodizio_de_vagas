@@ -32,7 +32,7 @@ public class WorkWebController {
         model.addAttribute("categorias", Category.values());
         model.addAttribute("servicos", workService.getAllWorks("DISPONIVEIS"));
         model.addAttribute("usuario", user);
-        return "fragments/servicos";
+        return "fragments/services";
     }
 
     @PostMapping
