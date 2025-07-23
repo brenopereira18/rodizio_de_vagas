@@ -2,6 +2,7 @@ package com.rodizio_de_vagas.rodizioDeVagas.api.modules.enrollment.repository;
 
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.enrollment.entity.EnrollmentEntity;
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.enrollment.entity.SubscriptionStatus;
+import com.rodizio_de_vagas.rodizioDeVagas.api.modules.user.entity.UserEntity;
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.work.entity.Category;
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.work.entity.WorkEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -42,8 +43,6 @@ public interface EnrollmentRepository extends JpaRepository<EnrollmentEntity, Lo
     @Query("SELECT e.userEntity.id FROM EnrollmentEntity e WHERE e.workEntity.id = :workId")
     List<Long> findUserIdsByWorkId(@Param("workId") Long workId);
 
-    boolean existsByWorkEntityAndSubscriptionStatus(WorkEntity work, SubscriptionStatus status);
-
     @Modifying
     @Query("""
         UPDATE EnrollmentEntity e SET e.subscriptionStatus = 'CANCELLED' WHERE e.userEntity.id = :userId AND e.workEntity.category = :category AND e.subscriptionStatus = 'WAITING' AND e.workEntity.id <> :currentWorkId
@@ -52,5 +51,12 @@ public interface EnrollmentRepository extends JpaRepository<EnrollmentEntity, Lo
 
     List<EnrollmentEntity> findByUserEntityIdAndWorkEntityCategoryAndSubscriptionStatus(Long userId, Category category, SubscriptionStatus status);
 
+    List<EnrollmentEntity> findByUserEntityRegistrationAndSubscriptionStatus(String registration, SubscriptionStatus status);
+
+    List<EnrollmentEntity> findByUserEntityRegistration(String registration);
+
+    List<EnrollmentEntity> findByWorkEntityIdAndSubscriptionStatus(Long workId, SubscriptionStatus status);
+
+    Optional<EnrollmentEntity> findByWorkEntityAndUserEntityAndSubscriptionStatusIn(WorkEntity work, UserEntity user, List<SubscriptionStatus> statuses);
 
 }
