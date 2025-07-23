@@ -11,6 +11,9 @@ import com.rodizio_de_vagas.rodizioDeVagas.api.modules.priorityQueue.repository.
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.user.entity.UserEntity;
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.work.entity.Category;
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.work.entity.WorkEntity;
+import com.rodizio_de_vagas.rodizioDeVagas.api.modules.work.entity.WorkStatus;
+import com.rodizio_de_vagas.rodizioDeVagas.api.modules.work.repository.WorkRepository;
+import com.rodizio_de_vagas.rodizioDeVagas.api.modules.work.service.WorkService;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -30,6 +33,9 @@ public class NotificationService {
 
     @Autowired
     private EnrollmentRepository enrollmentRepository;
+
+    @Autowired
+    private WorkRepository workRepository;
 
     @Autowired
     private WhatsappNotificationService whatsappNotificationService;
@@ -66,6 +72,8 @@ public class NotificationService {
 
         if (nextFiscalOpt.isEmpty()) {
             System.out.println("Nenhum fiscal disponível para notificação.");
+            work.setWorkStatus(WorkStatus.FREE);
+            workRepository.save(work);
             return;
         }
 
