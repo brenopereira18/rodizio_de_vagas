@@ -1,10 +1,13 @@
 package com.rodizio_de_vagas.rodizioDeVagas.web.controllers;
 
 import com.rodizio_de_vagas.rodizioDeVagas.api.exceptions.ResourceNotFoundException;
+import com.rodizio_de_vagas.rodizioDeVagas.api.modules.enrollment.entity.SubscriptionStatus;
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.user.entity.UserEntity;
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.user.service.UserService;
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.work.entity.Category;
+import com.rodizio_de_vagas.rodizioDeVagas.api.modules.work.entity.WorkStatus;
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.work.entity.dto.RequestCreateOrUpdateWorkDTO;
+import com.rodizio_de_vagas.rodizioDeVagas.api.modules.work.entity.dto.WorkWithEnrollment;
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.work.service.WorkService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -13,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.security.Principal;
+import java.util.List;
 
 @Controller
 @RequestMapping("/home/servicos")
@@ -25,12 +29,25 @@ public class WorkWebController {
     private WorkService workService;
 
     @GetMapping
-    public String showServices(Model model, Principal principal) {
-        UserEntity user = this.userService.getUser(principal.getName());
+    public String redirectToDisponiveis() {
+        return "redirect:/home/servicos/disponiveis";
+    }
+
+
+    @GetMapping("/disponiveis")
+    public String showAvailableServices(@RequestParam(defaultValue = "DISPONIVEIS") String filter, Model model, Principal principal) {
+        UserEntity user = userService.getUser(principal.getName());
+
+        List<WorkWithEnrollment> services = workService.getWorksByFilter(user.getRegistration(), filter);
+
+        model.addAttribute("filtro", filter);
         model.addAttribute("pageTitle", "Serviços");
         model.addAttribute("supervisores", userService.getAllManagers());
         model.addAttribute("categorias", Category.values());
-        model.addAttribute("servicos", workService.getAllWorks("DISPONIVEIS"));
+        model.addAttribute("servicos", services);
+        model.addAttribute("WAITING", SubscriptionStatus.WAITING);
+        model.addAttribute("FREE", WorkStatus.FREE);
+
         model.addAttribute("usuario", user);
         return "fragments/services";
     }
@@ -43,7 +60,7 @@ public class WorkWebController {
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", "Erro ao criar serviço: " + e.getMessage());
         }
-        return "redirect:/home/servicos";
+        return "redirect:/home/servicos/disponiveis";
     }
 
     @PostMapping("/atualizar")
@@ -54,7 +71,7 @@ public class WorkWebController {
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", "Erro ao atualizar serviço: " + e.getMessage());
         }
-        return "redirect:/home/servicos";
+        return "redirect:/home/servicos/disponiveis";
     }
 
     @PostMapping("/deletar")
@@ -65,7 +82,7 @@ public class WorkWebController {
         } catch (ResourceNotFoundException e) {
             redirectAttrs.addFlashAttribute("error", e.getMessage());
         }
-        return "redirect:/home/servicos";
+        return "redirect:/home/servicos/disponiveis";
     }
 
 }
