@@ -1,6 +1,7 @@
 package com.rodizio_de_vagas.rodizioDeVagas.api.modules.work.service;
 
 import com.rodizio_de_vagas.rodizioDeVagas.api.exceptions.ResourceNotFoundException;
+import com.rodizio_de_vagas.rodizioDeVagas.api.modules.enrollment.entity.EnrollmentEntity;
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.enrollment.entity.SubscriptionStatus;
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.enrollment.repository.EnrollmentRepository;
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.notification.service.NotificationService;
@@ -9,6 +10,7 @@ import com.rodizio_de_vagas.rodizioDeVagas.api.modules.user.repository.UserRepos
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.work.entity.WorkEntity;
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.work.entity.WorkStatus;
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.work.entity.dto.RequestCreateOrUpdateWorkDTO;
+import com.rodizio_de_vagas.rodizioDeVagas.api.modules.work.entity.dto.WorkWithEnrollment;
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.work.repository.WorkRepository;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,6 +19,10 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 
 @Service
 public class WorkService {
@@ -52,20 +58,119 @@ public class WorkService {
         return work;
     }
 
-    public List<WorkEntity> getAllWorks(String status) {
-        this.updateExpiredWorksToFree();
-        List<WorkEntity> works;
-
-        if (status.equalsIgnoreCase("DISPONIVEIS")) {
-            works = this.workRepository.findByWorkStatusInAndServiceDateAfter(
-                List.of(WorkStatus.OPEN, WorkStatus.FREE),
-                LocalDateTime.now());
-        } else if (status.equalsIgnoreCase("ENCERRADAS")) {
-            works = this.workRepository.findByWorkStatus(WorkStatus.CLOSED);
+    public List<WorkWithEnrollment> getWorksByFilter(String registration, String filter) {
+        if ("INSCRITOS".equalsIgnoreCase(filter)) {
+            return getEnrolledWorksForTax(registration);
+        } else if ("FREE".equalsIgnoreCase(filter)) {
+            return getFreeWorks(registration);
         } else {
-            throw new IllegalArgumentException("Filtro de status inválido.");
+            return getAvailableWorksForTax(registration);
         }
-        return works;
+    }
+
+    public List<WorkWithEnrollment> getFreeWorks(String registration) {
+        // Busca todos os serviços com status FREE e data futura
+        List<WorkEntity> works = this.workRepository.findByWorkStatusAndServiceDateAfter(
+            WorkStatus.FREE,
+            LocalDateTime.now()
+        );
+
+        // Busca todas as inscrições do fiscal
+        List<EnrollmentEntity> userEnrollments = this.enrollmentRepository
+            .findByUserEntityRegistration(registration);
+
+        // Coleta os IDs dos serviços onde o fiscal tem inscrição ACCEPTED
+        List<Long> acceptedWorkIds = userEnrollments.stream()
+            .filter(e -> e.getSubscriptionStatus() == SubscriptionStatus.ACCEPTED)
+            .map(e -> e.getWorkEntity().getId())
+            .toList();
+
+        // Retorna os serviços onde o fiscal NÃO tem inscrição ACCEPTED
+        return works.stream()
+            .filter(work -> !acceptedWorkIds.contains(work.getId()))
+            .map(work -> {
+                boolean hasPriority = true; // <- força como verdadeiro para não exibir aviso
+                boolean canApply = true;    // <- sempre pode se inscrever em serviços FREE
+                return new WorkWithEnrollment(work, null, hasPriority, canApply);
+            })
+            .toList();
+    }
+
+    public List<WorkWithEnrollment> getEnrolledWorksForTax(String registration) {
+        List<EnrollmentEntity> acceptedEnrollments = this.enrollmentRepository
+            .findByUserEntityRegistrationAndSubscriptionStatus(registration, SubscriptionStatus.ACCEPTED);
+
+        return acceptedEnrollments.stream()
+            .map(EnrollmentEntity::getWorkEntity)
+            .filter(work -> work.getServiceDate().isAfter(LocalDateTime.now()))
+            .map(work -> {
+                EnrollmentEntity enrollment = acceptedEnrollments.stream()
+                    .filter(e -> e.getWorkEntity().getId().equals(work.getId()))
+                    .findFirst()
+                    .orElse(null);
+
+                boolean hasPriority = isUserInPriorityForWork(work.getId(), registration, work.getNumberOfVacancies());
+                boolean canApply = work.getWorkStatus() != WorkStatus.FREE &&
+                    shouldAllowUserToApply(work, enrollment, hasPriority);
+
+                return new WorkWithEnrollment(work, enrollment, hasPriority, canApply);
+            })
+            .toList();
+    }
+
+    public List<WorkWithEnrollment> getAvailableWorksForTax(String registration) {
+        this.updateExpiredWorksToFree();
+
+        List<WorkEntity> availableWorks = this.workRepository.findByWorkStatusInAndServiceDateAfter(
+            List.of(WorkStatus.OPEN),
+            LocalDateTime.now()
+        );
+
+        List<EnrollmentEntity> userEnrollments = this.enrollmentRepository
+            .findByUserEntityRegistration(registration);
+
+        return availableWorks.stream()
+            .map(work -> {
+                EnrollmentEntity enrollment = userEnrollments.stream()
+                    .filter(e -> e.getWorkEntity().getId().equals(work.getId()))
+                    .findFirst()
+                    .orElse(null);
+
+                if (enrollment != null &&
+                    (enrollment.getSubscriptionStatus() == SubscriptionStatus.ACCEPTED ||
+                        enrollment.getSubscriptionStatus() == SubscriptionStatus.REFUSED)) {
+                    return null;
+                }
+
+                boolean hasPriority = isUserInPriorityForWork(work.getId(), registration, work.getNumberOfVacancies());
+                boolean canApply = shouldAllowUserToApply(work, enrollment, hasPriority);
+
+                return new WorkWithEnrollment(work, enrollment, hasPriority, canApply);
+            })
+            .filter(Objects::nonNull)
+            .toList();
+    }
+
+    public boolean isUserInPriorityForWork(Long workId, String registration, int numberOfVacancies) {
+        List<EnrollmentEntity> waitingList = this.enrollmentRepository
+            .findByWorkEntityIdAndSubscriptionStatus(workId, SubscriptionStatus.WAITING);
+
+        return waitingList.stream()
+            .map(e -> e.getUserEntity().getRegistration())
+            .limit(numberOfVacancies)
+            .anyMatch(reg -> reg.equals(registration));
+    }
+
+    private boolean shouldAllowUserToApply(WorkEntity work, EnrollmentEntity enrollment, boolean hasPriority) {
+        if (work.getWorkStatus() == WorkStatus.FREE) {
+            return true;
+        }
+
+        if (work.getWorkStatus() == WorkStatus.OPEN && hasPriority) {
+            return enrollment == null || enrollment.getSubscriptionStatus() == SubscriptionStatus.WAITING;
+        }
+
+        return false;
     }
 
     public WorkEntity updateWork(RequestCreateOrUpdateWorkDTO dto) {
