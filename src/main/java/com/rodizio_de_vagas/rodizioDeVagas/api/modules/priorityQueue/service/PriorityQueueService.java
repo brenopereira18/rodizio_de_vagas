@@ -122,5 +122,4 @@ public class PriorityQueueService {
         return allQueues.stream()
             .collect(Collectors.groupingBy(PriorityQueueEntity::getCategory));
     }
-
 }
