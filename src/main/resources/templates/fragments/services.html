@@ -6,36 +6,88 @@
     <div class="flex justify-between items-center mb-6 border-b-4 border-emerald-500 pb-2">
         <h1 class="text-2xl font-bold text-slate-700">
             <span th:if="${#lists.isEmpty(servicos)}">Nenhum serviço disponível no momento</span>
-            <span th:if="${!#lists.isEmpty(servicos)}">Serviços disponíveis</span>
+            <span th:if="${!#lists.isEmpty(servicos)}"
+                  th:text="${filtro == 'INSCRITOS'} ? 'Meus Serviços' : 'Serviços Disponíveis'">Serviços</span>
         </h1>
-        <button
-                type="button"
+        <button th:if="${usuario.userRole.name() == 'ADMINISTRADOR'}" type="button"
                 onclick="document.getElementById('modal-servico').classList.remove('hidden')"
-                class="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded shadow text-sm"
-        >
+                class="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded shadow text-sm">
             + Novo Serviço
         </button>
     </div>
 
+    <!-- Filtro -->
+    <form method="get" th:action="@{/home/servicos/disponiveis}" class="mb-6">
+        <label for="filter" class="text-sm font-medium text-slate-700 mr-2">Filtrar:</label>
+        <select name="filter" id="filter" onchange="this.form.submit()"
+                class="border border-slate-300 rounded px-2 py-1 text-sm">
+            <option value="DISPONIVEIS" th:selected="${filtro == 'DISPONIVEIS'}">Disponíveis</option>
+            <option value="INSCRITOS" th:selected="${filtro == 'INSCRITOS'}">Inscritos</option>
+            <option value="FREE" th:selected="${filtro == 'FREE'}">Serviços Abertos</option>
+        </select>
+    </form>
+
     <!-- Lista de serviços -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        <div th:each="servico : ${servicos}" class="bg-slate-200 p-6 rounded-2xl shadow-lg border border-slate-300 hover:shadow-xl transition-shadow duration-300 ease-in-out">
-            <h2 class="text-lg font-semibold text-slate-800" th:text="${servico.title}">Nome do Serviço</h2>
-            <p class="text-sm text-slate-600" th:text="'Local: ' + ${servico.location}"></p>
+        <div th:each="servico : ${servicos}"
+             class="bg-slate-200 p-6 rounded-2xl shadow-lg border border-slate-300 hover:shadow-xl transition-shadow duration-300 ease-in-out">
+            <h2 class="text-lg font-semibold text-slate-800" th:text="${servico.work.title}">Nome do Serviço</h2>
+            <p class="text-sm text-slate-600" th:text="'Local: ' + ${servico.work.location}"></p>
             <p class="text-sm text-slate-600"
-               th:text="'Data: ' + ${#temporals.format(servico.serviceDate, 'dd/MM/yyyy  - HH:mm')}"></p>
-            <p class="text-sm text-slate-600" th:text="'Supervisor: ' + ${servico.manager.fullName}"></p>
-            <p class="text-sm text-slate-600" th:text="'Categoria: ' + ${servico.category.category}"></p>
-            <p class="text-sm text-slate-600" th:text="'Vagas: ' + ${servico.numberOfVacancies}"></p>
+               th:text="'Data: ' + ${#temporals.format(servico.work.serviceDate, 'dd/MM/yyyy  - HH:mm')}"></p>
+            <p class="text-sm text-slate-600" th:text="'Supervisor: ' + ${servico.work.manager.fullName}"></p>
+            <p class="text-sm text-slate-600" th:text="'Categoria: ' + ${servico.work.category.category}"></p>
+            <p class="text-sm text-slate-600" th:text="'Vagas: ' + ${servico.work.numberOfVacancies}"></p>
 
             <!-- Botões para Fiscal -->
-            <div th:if="${usuario.userRole.name() == 'FISCAL'}" class="mt-4 flex gap-2 text-sm">
-                <form th:action="@{'/inscricoes/inscrever/' + ${servico.id}}" method="post">
-                    <button type="submit" class="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded">Inscrever-se</button>
-                </form>
-                <form th:action="@{'/inscricoes/recusar/' + ${servico.id}}" method="post">
-                    <button type="submit" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded">Recusar</button>
-                </form>
+            <div th:if="${usuario.userRole.name() == 'FISCAL'}" class="mt-4">
+
+                <!-- Inscrever e Recusar (somente se fiscal tem prioridade e status for nulo ou WAITING) -->
+                <div th:if="${servico.canApply}" class="flex gap-2 text-sm">
+                    <form th:if="${servico.work.workStatus.name() == 'FREE'}"
+                          th:action="@{'/inscricoes/servicos/free/inscrever/' + ${servico.work.id}}"
+                          method="post">
+                        <button type="submit" class="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded">
+                            Inscrever-se
+                        </button>
+                    </form>
+
+                    <form th:if="${servico.work.workStatus.name() != 'FREE'}"
+                          th:action="@{'/inscricoes/inscrever/' + ${servico.work.id}}"
+                          method="post">
+                        <button type="submit" class="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded">
+                            Inscrever-se
+                        </button>
+                    </form>
+
+                    <form th:if="${servico.work.workStatus.name() != 'FREE'}"
+                          th:action="@{'/inscricoes/recusar/' + ${servico.work.id}}" method="post">
+                        <button type="submit" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded">
+                            Recusar
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Mensagem para fiscais que ainda não têm prioridade -->
+                <div th:if="${!servico.hasPriority and (servico.enrollment == null or servico.enrollment.subscriptionStatus.name() == 'WAITING')}"
+                     class="text-sm text-yellow-700 mt-2">
+                    Não está disponível para você
+                </div>
+
+                <!-- Cancelar inscrição (se já estiver aceito) -->
+                <div th:if="${servico.enrollment != null and servico.enrollment.subscriptionStatus.name() == 'ACCEPTED'}">
+                    <form th:action="@{'/inscricoes/cancelar/' + ${servico.enrollment.id}}" method="post">
+                        <button type="submit" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded">
+                            Cancelar inscrição
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Se já recusou -->
+                <div th:if="${servico.enrollment != null and servico.enrollment.subscriptionStatus.name() == 'REFUSED'}"
+                     class="text-red-600 text-sm">
+                    Você recusou este serviço
+                </div>
             </div>
 
             <!-- Botões para Administrador -->
@@ -43,23 +95,23 @@
                 <button
                         type="button"
                         class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded"
-                        th:data-id="${servico.id}"
-                        th:data-title="${servico.title}"
-                        th:data-location="${servico.location}"
-                        th:data-serviceDate="${#temporals.format(servico.serviceDate, 'yyyy-MM-dd''T''HH:mm')}"
-                        th:data-managerId="${servico.manager.id}"
-                        th:data-category="${servico.category.name()}"
-                        th:data-vacancies="${servico.numberOfVacancies}"
+                        th:data-id="${servico.work.id}"
+                        th:data-title="${servico.work.title}"
+                        th:data-location="${servico.work.location}"
+                        th:data-servicedate="${#temporals.format(servico.work.serviceDate, 'yyyy-MM-dd''T''HH:mm')}"
+                        th:data-managerid="${servico.work.manager.id}"
+                        th:data-category="${servico.work.category.name()}"
+                        th:data-vacancies="${servico.work.numberOfVacancies}"
                         onclick="abrirModalEdicaoComDataset(this)">
                     Editar
                 </button>
 
                 <form th:action="@{/home/servicos/deletar}" method="post"
                       onsubmit="return confirm('Tem certeza que deseja excluir este serviço?');">
-                    <input type="hidden" name="id" th:value="${servico.id}" />
-                    <button type="submit" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded">Excluir</button>
+                    <input type="hidden" name="id" th:value="${servico.work.id}"/>
+                    <button type="submit" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded">Excluir
+                    </button>
                 </form>
-
             </div>
         </div>
     </div>
@@ -73,23 +125,19 @@
                        class="border border-slate-300 rounded px-3 py-2 w-full"/>
                 <input type="text" name="location" placeholder="Local" required
                        class="border border-slate-300 rounded px-3 py-2 w-full"/>
-                <input type="datetime-local" name="serviceDate" placeholder="Data" required
+                <input type="datetime-local" name="serviceDate" required
                        class="border border-slate-300 rounded px-3 py-2 w-full"/>
-                <select name="managerId" required
-                        class="border border-slate-300 rounded px-3 py-2 w-full">
+                <select name="managerId" required class="border border-slate-300 rounded px-3 py-2 w-full">
                     <option value="">Selecione um supervisor</option>
                     <option th:each="supervisor : ${supervisores}"
                             th:value="${supervisor.id}"
-                            th:text="${supervisor.fullName}">
-                    </option>
+                            th:text="${supervisor.fullName}"></option>
                 </select>
-                <select name="category" required
-                        class="border border-slate-300 rounded px-3 py-2 w-full">
+                <select name="category" required class="border border-slate-300 rounded px-3 py-2 w-full">
                     <option value="">Selecione uma categoria</option>
                     <option th:each="categoria : ${categorias}"
                             th:value="${categoria.name()}"
-                            th:text="${categoria.category}">
-                    </option>
+                            th:text="${categoria.category}"></option>
                 </select>
                 <input type="number" name="numberOfVacancies" placeholder="Número de Vagas" required
                        class="border border-slate-300 rounded px-3 py-2 w-full"/>
@@ -97,12 +145,10 @@
                 <div class="flex justify-end gap-2">
                     <button type="button"
                             onclick="document.getElementById('modal-servico').classList.add('hidden')"
-                            class="px-4 py-2 rounded bg-gray-300 hover:bg-gray-400 text-slate-700">
-                        Cancelar
+                            class="px-4 py-2 rounded bg-gray-300 hover:bg-gray-400 text-slate-700">Cancelar
                     </button>
                     <button type="submit"
-                            class="px-4 py-2 rounded bg-emerald-500 hover:bg-emerald-600 text-white">
-                        Criar
+                            class="px-4 py-2 rounded bg-emerald-500 hover:bg-emerald-600 text-white">Criar
                     </button>
                 </div>
             </form>
@@ -114,7 +160,8 @@
          class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
         <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
             <h2 class="text-xl font-bold mb-4">Editar Serviço</h2>
-            <form id="form-editar-servico" th:action="@{/home/servicos/atualizar}" method="post" class="flex flex-col gap-4">
+            <form id="form-editar-servico" th:action="@{/home/servicos/atualizar}" method="post"
+                  class="flex flex-col gap-4">
                 <input type="hidden" name="id" id="edit-id"/>
                 <input type="text" name="title" id="edit-title" placeholder="Título" required
                        class="border border-slate-300 rounded px-3 py-2 w-full"/>
@@ -126,29 +173,24 @@
                         class="border border-slate-300 rounded px-3 py-2 w-full">
                     <option th:each="supervisor : ${supervisores}"
                             th:value="${supervisor.id}"
-                            th:text="${supervisor.fullName}">
-                    </option>
+                            th:text="${supervisor.fullName}"></option>
                 </select>
                 <select name="category" id="edit-category" required
                         class="border border-slate-300 rounded px-3 py-2 w-full">
                     <option th:each="categoria : ${categorias}"
                             th:value="${categoria.name()}"
-                            th:text="${categoria.category}">
-                    </option>
+                            th:text="${categoria.category}"></option>
                 </select>
                 <input type="number" name="numberOfVacancies" id="edit-numberOfVacancies" placeholder="Número de Vagas"
-                       required
-                       class="border border-slate-300 rounded px-3 py-2 w-full"/>
+                       required class="border border-slate-300 rounded px-3 py-2 w-full"/>
 
                 <div class="flex justify-end gap-2">
                     <button type="button"
                             onclick="document.getElementById('modal-editar-servico').classList.add('hidden')"
-                            class="px-4 py-2 rounded bg-gray-300 hover:bg-gray-400 text-slate-700">
-                        Cancelar
+                            class="px-4 py-2 rounded bg-gray-300 hover:bg-gray-400 text-slate-700">Cancelar
                     </button>
                     <button type="submit"
-                            class="px-4 py-2 rounded bg-emerald-500 hover:bg-emerald-600 text-white">
-                        Atualizar
+                            class="px-4 py-2 rounded bg-emerald-500 hover:bg-emerald-600 text-white">Atualizar
                     </button>
                 </div>
             </form>

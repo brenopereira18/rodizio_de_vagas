@@ -63,12 +63,56 @@ public class EnrollmentService {
         }
 
         if (accepted) {
+            WorkEntity work = enrollment.getWorkEntity();
+            int acceptedCount = enrollmentRepository.countByWorkEntityAndSubscriptionStatus(work, SubscriptionStatus.ACCEPTED);
+
+            if (acceptedCount >= work.getNumberOfVacancies()) {
+                throw new IllegalStateException("Não há mais vagas disponíveis para este serviço.");
+            }
             handleEnrollmentAcceptance(enrollment);
         } else {
             handleEnrollmentRejection(enrollment);
         }
+
         priorityQueueService.sendFiscalToEndOfQueue(enrollment.getUserEntity(), enrollment.getWorkEntity().getCategory());
         finalizeWorkStatus(enrollment.getWorkEntity());
+    }
+
+    @Transactional
+    public void reusePreviousEnrollment(Long workId, String registration) {
+        // Busca o fiscal
+        UserEntity fiscal = userRepository.findByRegistration(registration)
+            .orElseThrow(() -> new ResourceNotFoundException("Fiscal não encontrado"));
+
+        // Busca o serviço
+        WorkEntity work = workRepository.findById(workId)
+            .orElseThrow(() -> new ResourceNotFoundException("Serviço não encontrado"));
+
+        // Verifica se ainda há vaga
+        int totalAccepted = enrollmentRepository.countByWorkEntityAndSubscriptionStatus(work, SubscriptionStatus.ACCEPTED);
+        if (totalAccepted >= work.getNumberOfVacancies()) {
+            throw new ResourceNotFoundException("Não há vagas disponíveis para este serviço");
+        }
+
+        // Busca a inscrição reutilizável
+        EnrollmentEntity enrollment = enrollmentRepository
+            .findByWorkEntityAndUserEntityAndSubscriptionStatusIn(
+                work,
+                fiscal,
+                List.of(SubscriptionStatus.REFUSED, SubscriptionStatus.CANCELLED, SubscriptionStatus.EXPIRED, SubscriptionStatus.WAITING)
+            )
+            .orElseThrow(() -> new ResourceNotFoundException("Inscrição anterior não encontrada"));
+
+        // Atualiza status da inscrição
+        enrollment.setSubscriptionStatus(SubscriptionStatus.ACCEPTED);
+        enrollmentRepository.save(enrollment);
+
+        // Se após aceitar essa, não sobrarem vagas, fecha o serviço
+        totalAccepted += 1;
+        if (totalAccepted >= work.getNumberOfVacancies()) {
+            work.setWorkStatus(WorkStatus.CLOSED);
+            workRepository.save(work);
+        }
     }
 
     private void handleEnrollmentAcceptance(EnrollmentEntity enrollment) {
@@ -110,14 +154,26 @@ public class EnrollmentService {
 
     private void finalizeWorkStatus(WorkEntity work) {
         int totalAccepted = this.enrollmentRepository.countByWorkEntityAndSubscriptionStatus(work, SubscriptionStatus.ACCEPTED);
-        boolean hasPending = this.enrollmentRepository.existsByWorkEntityAndSubscriptionStatus(work, SubscriptionStatus.WAITING);
+        int totalVacancies = work.getNumberOfVacancies();
 
-        if (totalAccepted < work.getNumberOfVacancies() && !hasPending) {
-            this.notificationService.notifyNextFiscal(work, work.getCategory());
-        } else {
+        if (totalAccepted >= totalVacancies) {
             closeWork(work);
+            return;
         }
+
+        // Só notificar próximo fiscal se ninguém com prioridade estiver pendente
+        List<EnrollmentEntity> waitingList = this.enrollmentRepository
+            .findByWorkEntityIdAndSubscriptionStatus(work.getId(), SubscriptionStatus.WAITING);
+
+        if (!waitingList.isEmpty()) {
+            // Ainda há fiscais aguardando, não notifica ninguém novo ainda
+            return;
+        }
+
+        // Só neste ponto notifica o próximo da fila
+        this.notificationService.notifyNextFiscal(work, work.getCategory());
     }
+
 
     private void closeWork(WorkEntity work) {
         work.setWorkStatus(WorkStatus.CLOSED);
