@@ -12,39 +12,47 @@
 </head>
 <body class="text-slate-600">
 <div class="flex h-screen">
-    <nav class="w-64 bg-slate-200 p-4">
-        <img class="mb-16" th:src="@{/images/logo.png}" alt="Logo da prefeitura">
-        <ul>
+    <!-- Botão para abrir/fechar o menu (visível apenas em telas pequenas) -->
+    <button id="menu-toggle"
+            class="fixed top-4 left-4 z-50 md:hidden p-2 bg-white rounded-md shadow-md focus:outline-none">
+        <img src="/images/menu.svg" alt="Menu" class="w-6 h-6">
+    </button>
+
+    <!-- Sidebar -->
+    <nav id="sidebar"
+         class="fixed md:static top-0 left-0 h-full w-60 md:w-64 bg-slate-200 p-4 transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out z-40 shadow-lg border-r border-slate-300">
+        <img class="mb-10 mt-16 md:mt-0 w-48 md:w-56" th:src="@{/images/logo.png}" alt="Logo da prefeitura">
+        <ul class="text-sm md:text-base">
             <li>
-                <a href="#" th:href="@{/home/servicos}"
+                <a th:href="@{/home/servicos}"
                    class="flex items-center w-full py-2 px-4 rounded-md hover:bg-emerald-400">
                     <img th:src="@{/images/servico.svg}" alt="Ícone" class="mr-2">
                     <span>Serviços</span>
                 </a>
             </li>
-            <li>
-                <a href="#" th:href="@{/home/fiscais}"
+            <li th:if="${usuario.userRole.name() == 'ADMINISTRADOR'}">
+                <a th:href="@{/home/fiscais}"
                    class="flex items-center w-full py-2 px-4 rounded-md hover:bg-emerald-400">
                     <img th:src="@{/images/users.svg}" alt="Ícone" class="mr-2">
                     <span>Fiscais/Supervisores</span>
                 </a>
             </li>
-            <li>
-                <a href="#" th:href="@{/home/fila-de-prioridade}"
+            <li th:if="${usuario.userRole.name() == 'ADMINISTRADOR'}">
+                <a th:href="@{/home/fila-de-prioridade}"
                    class="flex items-center w-full py-2 px-4 rounded-md hover:bg-emerald-400">
                     <img th:src="@{/images/list.svg}" alt="Ícone" class="mr-2">
                     <span>Fila de prioridade</span>
                 </a>
             </li>
-            <li>
-                <a href="#" th:href="@{/home/inscricoes}"
+            <li th:if="${usuario.userRole.name() == 'ADMINISTRADOR'}">
+                <a th:href="@{/home/inscricoes}"
                    class="flex items-center w-full py-2 px-4 rounded-md hover:bg-emerald-400">
                     <img th:src="@{/images/inscricoes.svg}" alt="Ícone" class="mr-2">
                     <span>Inscrições</span>
                 </a>
             </li>
             <li>
-                <a href="#" th:href="@{/home/perfil}"
+                <a th:href="@{/home/perfil}"
                    class="flex items-center w-full py-2 px-4 rounded-md hover:bg-emerald-400">
                     <img th:src="@{/images/user.svg}" alt="Ícone" class="mr-2">
                     <span>Meu Perfil</span>
@@ -53,10 +61,19 @@
         </ul>
     </nav>
 
-    <main class="flex-1 p-6 overflow-auto" id="content">
-        <!-- Conteúdo inicial -->
+    <!-- Conteúdo principal -->
+    <main class="flex-1 p-6 overflow-auto mt-12 md:mt-0" id="content">
         <div th:replace="${content}"></div>
     </main>
 </div>
+
+<script>
+    const menuToggle = document.getElementById('menu-toggle');
+    const sidebar = document.getElementById('sidebar');
+
+    menuToggle.addEventListener('click', () => {
+        sidebar.classList.toggle('-translate-x-full');
+    });
+</script>
 </body>
 </html>

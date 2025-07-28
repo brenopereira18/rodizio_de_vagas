@@ -2,37 +2,35 @@
 <html xmlns:th="http://www.thymeleaf.org"
       th:replace="~{layout :: layout(~{::div})}">
 <div>
-    <div class="flex justify-between items-center mb-6 border-b-4 border-emerald-500 pb-2">
-        <h1 class="text-2xl font-bold text-slate-700">
+    <div class="flex flex-col md:flex-row md:justify-between md:items-center mb-8 md:mb-6 border-b-4 border-emerald-500 pb-2 gap-4">
+        <h1 class="text-lg md:text-2xl font-bold text-slate-700 text-left md:text-left">
             Fiscais/Supervisores
         </h1>
-        <div class="text-sm">
+
+        <div class="text-xs md:text-sm flex flex-col sm:flex-row gap-2 sm:justify-center md:justify-end">
             <button
                     type="button"
                     onclick="document.getElementById('modal-servico').classList.remove('hidden')"
-                    class="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded shadow"
+                    class="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded shadow flex items-center justify-center"
             >
-                <div class="flex">
-                    <img th:src="@{/images/user-plus.svg}" alt="Ícone" class="mr-2 max-w-5">
-                    Novo Usuário
-                </div>
+                <img th:src="@{/images/user-plus.svg}" alt="Ícone" class="mr-2 h-4 w-4">
+                Novo Usuário
             </button>
+
             <button
                     type="button"
                     onclick="document.getElementById('modal-deletar').classList.remove('hidden')"
-                    class="bg-red-400 hover:bg-red-500 text-white px-4 py-2 rounded shadow ml-2"
+                    class="bg-red-400 hover:bg-red-500 text-white px-4 py-2 rounded shadow flex items-center justify-center"
             >
-                <div class="flex">
-                    <img th:src="@{/images/user-minus.svg}" alt="Ícone" class="mr-2 max-w-5">
-                    Excluir Usuário
-                </div>
+                <img th:src="@{/images/user-minus.svg}" alt="Ícone" class="mr-2 h-4 w-4">
+                Excluir Usuário
             </button>
         </div>
     </div>
 
     <!-- Botões para alternar -->
     <div class="max-w-fit flex justify-center mb-8">
-        <div class="inline-flex gap-2 border-[3px] border-emerald-500 rounded-xl select-none p-1 text-sm">
+        <div class="inline-flex gap-2 border-[3px] border-emerald-500 rounded-xl select-none p-1 text-xs md:text-sm">
             <label class="flex flex-grow items-center justify-center rounded-lg cursor-pointer">
                 <input type="radio" name="toggle" value="fiscais" class="peer hidden" checked
                        onclick="mostrarTabela('fiscais')"/>
@@ -58,11 +56,11 @@
 
     <!-- Tabela de Fiscais -->
     <div id="tabela-fiscais" class="">
-        <h2 class="text-lg font-bold mb-2">Lista de Fiscais</h2>
+        <h2 class="text-base md:text-lg font-bold mb-2">Lista de Fiscais</h2>
         <div class="overflow-auto max-h-[60vh]">
             <table class="table-auto w-full border border-slate-300 mb-6">
                 <thead class="bg-slate-100">
-                <tr>
+                <tr class="text-sm md:text-base">
                     <th class="border px-4 py-2 text-left">Nome</th>
                     <th class="border px-4 py-2 text-left">Matrícula</th>
                     <th class="border px-4 py-2 text-left">Telefone</th>
@@ -104,8 +102,8 @@
 
     <!-- Modal para criar novo fiscal -->
     <div id="modal-servico" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
-        <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
-            <h2 class="text-xl font-bold mb-4">Novo Fiscal/Supervisor</h2>
+        <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-md mx-4">
+            <h2 class="text-lg md:text-xl font-bold mb-4">Novo Fiscal/Supervisor</h2>
             <form th:action="@{/home/fiscais}" method="post" class="flex flex-col gap-4">
                 <input type="text" name="fullName" placeholder="Nome completo" required
                        class="border border-slate-300 rounded px-3 py-2 w-full"/>
@@ -121,7 +119,7 @@
                             th:text="${funcao.userRole}">
                     </option>
                 </select>
-                <div class="flex justify-end gap-2">
+                <div class="flex justify-end gap-2 text-xs md:text-base">
                     <button type="button"
                             onclick="document.getElementById('modal-servico').classList.add('hidden')"
                             class="px-4 py-2 rounded bg-gray-300 hover:bg-gray-400 text-slate-700">
@@ -138,13 +136,13 @@
 
     <!-- Modal de exclusão -->
     <div id="modal-deletar" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
-        <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
-            <h2 class="text-xl font-bold mb-4">Excluir Fiscal/Supervisor</h2>
+        <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-md mx-4">
+            <h2 class="text-lg md:text-xl font-bold mb-4">Excluir Fiscal/Supervisor</h2>
             <form th:action="@{/home/fiscais/deletar}" method="post" class="flex flex-col gap-4">
                 <input type="text" name="registration" placeholder="Digite a matrícula para excluir" required
                        class="border border-slate-300 rounded px-3 py-2 w-full"/>
 
-                <div class="flex justify-end gap-2">
+                <div class="flex justify-end gap-2 text-xs md:text-base">
                     <button type="button"
                             onclick="document.getElementById('modal-deletar').classList.add('hidden')"
                             class="px-4 py-2 rounded bg-gray-300 hover:bg-gray-400 text-slate-700">
