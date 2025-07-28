@@ -7,10 +7,11 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public record ResponseWorkWithTaxDTO(
-    String workName,
-    String local,
+    String title,
+    String location,
     LocalDateTime serviceDate,
     UserEntity manager,
     Category category,
+    int numberOfVacancies,
     List<ResponseTaxInfosDTO> tax
 ) {}
