@@ -22,7 +22,8 @@ import org.springframework.stereotype.Service;
 import java.nio.file.AccessDeniedException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
+import java.util.LinkedHashMap;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -174,7 +175,6 @@ public class EnrollmentService {
         this.notificationService.notifyNextFiscal(work, work.getCategory());
     }
 
-
     private void closeWork(WorkEntity work) {
         work.setWorkStatus(WorkStatus.CLOSED);
         workRepository.save(work);
@@ -200,29 +200,42 @@ public class EnrollmentService {
     /**
      * Agrupa inscrições realizadas em um determinado mês e ano, organizadas por título do serviço.
      *
-     * @param month Mês das inscrições a serem consultadas.
-     * @param year  Ano das inscrições a serem consultadas.
      * @return Lista de serviços com as respectivas inscrições e status de cada inscrito.
      */
-    public List<ResponseWorkWithTaxDTO> getGroupedEnrollmentsByMonth(int month, int year) {
-        LocalDate startDate = LocalDate.of(year, month, 1);
-        LocalDate endDate = startDate.withDayOfMonth(startDate.lengthOfMonth());
+    public List<ResponseWorkWithTaxDTO> getGroupedEnrollmentsByMonth() {
+        LocalDate endDate = LocalDate.now();
+        LocalDate startDate = endDate.minusDays(30);
 
-        List<EnrollmentEntity> enrollments = this.enrollmentRepository.findConfirmedEnrollmentsByMonth(startDate.atStartOfDay(), endDate.atTime(LocalTime.MAX));
-        Map<WorkEntity, List<ResponseTaxInfosDTO>> groupedEnrollments = groupEnrollments(enrollments);
+        List<WorkEntity> works = this.workRepository.findAllWithEnrollmentsFromLastMonth(startDate.atStartOfDay())
+            .stream()
+            .sorted(Comparator.comparing(WorkEntity::getCreatedAt).reversed())
+            .toList();
+        Map<WorkEntity, List<ResponseTaxInfosDTO>> groupedEnrollments = groupEnrollmentsFromWorks(works);
         return buildResponse(groupedEnrollments);
     }
 
     // Agrupa as inscrições por título do serviço e mapeia as informações fiscais de cada inscrito
-    private Map<WorkEntity, List<ResponseTaxInfosDTO>> groupEnrollments(List<EnrollmentEntity> enrollments) {
-        return enrollments.stream()
-            .collect(Collectors.groupingBy(
-                EnrollmentEntity::getWorkEntity,
-                Collectors.mapping(
-                    e -> new ResponseTaxInfosDTO(e.getUserEntity().getFullName(), e.getSubscriptionStatus()),
-                    Collectors.toList()
-                )
+    private Map<WorkEntity, List<ResponseTaxInfosDTO>> groupEnrollmentsFromWorks(List<WorkEntity> works) {
+        return works.stream()
+            .collect(Collectors.toMap(
+                work -> work,
+                work -> {
+                    if (work.getEnrollments() == null) return List.of();
+                    return work.getEnrollments().stream()
+                        .filter(e -> e.getSubscriptionStatus() == SubscriptionStatus.ACCEPTED)
+                        .map(this::convertToTaxInfosDTO)
+                        .toList();
+                },
+                (e1, e2) -> e1,
+                LinkedHashMap::new
             ));
+    }
+
+    private ResponseTaxInfosDTO convertToTaxInfosDTO(EnrollmentEntity enrollment) {
+        return new ResponseTaxInfosDTO(
+            enrollment.getUserEntity().getFullName(),
+            enrollment.getSubscriptionStatus()
+        );
     }
 
     // Constrói a lista de resposta formatada para retornar os grupos com os respectivos inscritos
@@ -236,6 +249,7 @@ public class EnrollmentService {
                     work.getServiceDate(),
                     work.getManager(),
                     work.getCategory(),
+                    work.getNumberOfVacancies(),
                     entry.getValue()
                 );
             })
