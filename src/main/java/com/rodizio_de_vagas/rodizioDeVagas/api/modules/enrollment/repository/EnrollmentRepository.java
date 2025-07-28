@@ -24,14 +24,6 @@ public interface EnrollmentRepository extends JpaRepository<EnrollmentEntity, Lo
 
     @Query("""
             SELECT e FROM EnrollmentEntity e
-            WHERE (e.workEntity.workStatus = 'CLOSED' OR e.workEntity.serviceDate < CURRENT_TIMESTAMP)
-            AND e.subscriptionStatus = 'ACCEPTED'
-            AND e.workEntity.serviceDate BETWEEN :startDate AND :endDate
-        """)
-    List<EnrollmentEntity> findConfirmedEnrollmentsByMonth(LocalDateTime startDate, LocalDateTime endDate);
-
-    @Query("""
-            SELECT e FROM EnrollmentEntity e
             JOIN e.workEntity w
             JOIN NotificationEntity n ON n.userEntity = e.userEntity AND n.workEntity = e.workEntity
             WHERE w.registrationLimit > CURRENT_TIMESTAMP
