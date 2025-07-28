@@ -28,7 +28,7 @@ public class EnrollmentController {
     }
 
     @PutMapping("/servicos/free/{id}/respond")
-    public ResponseEntity<Void> aceitarServicoFreeApi(@PathVariable Long id, Principal principal) {
+    public ResponseEntity<Void> acceptedWorkFree(@PathVariable Long id, Principal principal) {
         enrollmentService.reusePreviousEnrollment(id, principal.getName());
         return ResponseEntity.noContent().build();
     }
@@ -36,8 +36,8 @@ public class EnrollmentController {
 
     @PreAuthorize("hasRole('ADMINISTRADOR')")
     @GetMapping
-    public ResponseEntity<List<ResponseWorkWithTaxDTO>> getEnrollmentsGroupedByWork(@RequestParam int month, @RequestParam int year) {
-        List<ResponseWorkWithTaxDTO> result = this.enrollmentService.getGroupedEnrollmentsByMonth(month, year);
+    public ResponseEntity<List<ResponseWorkWithTaxDTO>> getEnrollmentsGroupedByWork() {
+        List<ResponseWorkWithTaxDTO> result = this.enrollmentService.getGroupedEnrollmentsByMonth();
         return ResponseEntity.ok().body(result);
     }
 
