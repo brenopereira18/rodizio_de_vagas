@@ -86,7 +86,7 @@ public class NotificationService {
             .workEntity(work)
             .userEntity(tax)
             .shippingDate(LocalDateTime.now())
-            .responseDeadline(LocalDateTime.now().plusHours(2))
+            .responseDeadline(LocalDateTime.now().plusHours(6))
             .message("Olá " + tax.getFullName() + ", temos um serviço disponível da categoria " + work.getCategory()  + " no qual você tem prioridade. Acesse o link para visualizá-lo.")
             .workLink("url-do-trabalho")
             .build();

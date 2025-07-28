@@ -4,14 +4,14 @@
 
     <!-- Título e botão -->
     <div class="flex justify-between items-center mb-6 border-b-4 border-emerald-500 pb-2">
-        <h1 class="text-2xl font-bold text-slate-700">
-            <span th:if="${#lists.isEmpty(servicos)}">Nenhum serviço disponível no momento</span>
+        <h1 class="text-lg font-bold text-slate-700 md:text-2xl">
+            <span th:if="${#lists.isEmpty(servicos)}">Nenhum serviço ativo</span>
             <span th:if="${!#lists.isEmpty(servicos)}"
-                  th:text="${filtro == 'INSCRITOS'} ? 'Meus Serviços' : 'Serviços Disponíveis'">Serviços</span>
+                  th:text="${filtro == 'INSCRITOS'} ? 'Meus Serviços' : 'Serviços Ativos'">Serviços</span>
         </h1>
         <button th:if="${usuario.userRole.name() == 'ADMINISTRADOR'}" type="button"
                 onclick="document.getElementById('modal-servico').classList.remove('hidden')"
-                class="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded shadow text-sm">
+                class="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded shadow text-xs md:text-sm">
             + Novo Serviço
         </button>
     </div>
@@ -31,7 +31,7 @@
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <div th:each="servico : ${servicos}"
              class="bg-slate-200 p-6 rounded-2xl shadow-lg border border-slate-300 hover:shadow-xl transition-shadow duration-300 ease-in-out">
-            <h2 class="text-lg font-semibold text-slate-800" th:text="${servico.work.title}">Nome do Serviço</h2>
+            <h2 class="text-base md:text-lg font-semibold text-slate-800" th:text="${servico.work.title}">Nome do Serviço</h2>
             <p class="text-sm text-slate-600" th:text="'Local: ' + ${servico.work.location}"></p>
             <p class="text-sm text-slate-600"
                th:text="'Data: ' + ${#temporals.format(servico.work.serviceDate, 'dd/MM/yyyy  - HH:mm')}"></p>
@@ -43,7 +43,7 @@
             <div th:if="${usuario.userRole.name() == 'FISCAL'}" class="mt-4">
 
                 <!-- Inscrever e Recusar (somente se fiscal tem prioridade e status for nulo ou WAITING) -->
-                <div th:if="${servico.canApply}" class="flex gap-2 text-sm">
+                <div th:if="${servico.canApply}" class="flex gap-2 text-xs md:text-sm">
                     <form th:if="${servico.work.workStatus.name() == 'FREE'}"
                           th:action="@{'/inscricoes/servicos/free/inscrever/' + ${servico.work.id}}"
                           method="post">
@@ -71,11 +71,11 @@
                 <!-- Mensagem para fiscais que ainda não têm prioridade -->
                 <div th:if="${!servico.hasPriority and (servico.enrollment == null or servico.enrollment.subscriptionStatus.name() == 'WAITING')}"
                      class="text-sm text-yellow-700 mt-2">
-                    Não está disponível para você
+                    No momento não está disponível para você
                 </div>
 
                 <!-- Cancelar inscrição (se já estiver aceito) -->
-                <div th:if="${servico.enrollment != null and servico.enrollment.subscriptionStatus.name() == 'ACCEPTED'}">
+                <div th:if="${servico.enrollment != null and servico.enrollment.subscriptionStatus.name() == 'ACCEPTED'}" class="text-xs md:text-sm">
                     <form th:action="@{'/inscricoes/cancelar/' + ${servico.enrollment.id}}" method="post">
                         <button type="submit" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded">
                             Cancelar inscrição
@@ -88,10 +88,11 @@
                      class="text-red-600 text-sm">
                     Você recusou este serviço
                 </div>
+
             </div>
 
             <!-- Botões para Administrador -->
-            <div th:if="${usuario.userRole.name() == 'ADMINISTRADOR'}" class="mt-4 flex gap-2 text-sm">
+            <div th:if="${usuario.userRole.name() == 'ADMINISTRADOR'}" class="mt-4 flex gap-2 text-xs md:text-sm">
                 <button
                         type="button"
                         class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded"
@@ -118,8 +119,8 @@
 
     <!-- Modal para criar novo serviço -->
     <div id="modal-servico" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
-        <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
-            <h2 class="text-xl font-bold mb-4">Novo Serviço</h2>
+        <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-md mx-4">
+            <h2 class="text-lg md:text-xl font-bold mb-4">Novo Serviço</h2>
             <form th:action="@{/home/servicos}" method="post" class="flex flex-col gap-4">
                 <input type="text" name="title" placeholder="Título" required
                        class="border border-slate-300 rounded px-3 py-2 w-full"/>
@@ -142,7 +143,7 @@
                 <input type="number" name="numberOfVacancies" placeholder="Número de Vagas" required
                        class="border border-slate-300 rounded px-3 py-2 w-full"/>
 
-                <div class="flex justify-end gap-2">
+                <div class="flex justify-end gap-2 text-xs md:text-base">
                     <button type="button"
                             onclick="document.getElementById('modal-servico').classList.add('hidden')"
                             class="px-4 py-2 rounded bg-gray-300 hover:bg-gray-400 text-slate-700">Cancelar
@@ -158,8 +159,8 @@
     <!-- Modal de Edição -->
     <div id="modal-editar-servico"
          class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
-        <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
-            <h2 class="text-xl font-bold mb-4">Editar Serviço</h2>
+        <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-md mx-4">
+            <h2 class="text-lg md:text-xl font-bold mb-4">Editar Serviço</h2>
             <form id="form-editar-servico" th:action="@{/home/servicos/atualizar}" method="post"
                   class="flex flex-col gap-4">
                 <input type="hidden" name="id" id="edit-id"/>
@@ -184,7 +185,7 @@
                 <input type="number" name="numberOfVacancies" id="edit-numberOfVacancies" placeholder="Número de Vagas"
                        required class="border border-slate-300 rounded px-3 py-2 w-full"/>
 
-                <div class="flex justify-end gap-2">
+                <div class="flex justify-end gap-2 text-xs md:text-base">
                     <button type="button"
                             onclick="document.getElementById('modal-editar-servico').classList.add('hidden')"
                             class="px-4 py-2 rounded bg-gray-300 hover:bg-gray-400 text-slate-700">Cancelar

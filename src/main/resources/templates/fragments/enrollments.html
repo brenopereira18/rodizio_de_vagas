@@ -6,9 +6,34 @@
     <link rel="stylesheet" th:href="@{/css/output.css}">
 </head>
 <body>
-<div>
-    <h1>Conteúdo de inscrições</h1>
-    <p>Este é o conteúdo de inscrições.</p>
+<div class="flex justify-between items-center mb-6 border-b-4 border-emerald-500 pb-2">
+    <h1 class="text-lg md:text-2xl font-bold text-slate-700">
+        <span th:if="${#lists.isEmpty(servicos)}">Nenhum serviço no momento</span>
+        <span th:if="${!#lists.isEmpty(servicos)}">Serviços</span>
+    </h1>
 </div>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    <div th:each="servico : ${servicos}"
+         class="bg-slate-200 p-6 rounded-2xl shadow-lg border border-slate-300 hover:shadow-xl transition-shadow duration-300 ease-in-out">
+
+        <h2 class="text-base md:text-lg font-semibold text-slate-800" th:text="${servico.title}">Nome do Serviço</h2>
+        <p class="text-sm text-slate-600" th:text="'Local: ' + ${servico.location}"></p>
+        <p class="text-sm text-slate-600"
+           th:text="'Data: ' + ${#temporals.format(servico.serviceDate, 'dd/MM/yyyy  - HH:mm')}"></p>
+        <p class="text-sm text-slate-600" th:text="'Supervisor: ' + ${servico.manager.fullName}"></p>
+        <p class="text-sm text-slate-600" th:text="'Categoria: ' + ${servico.category.category}"></p>
+        <p class="text-sm text-slate-600" th:text="'Número de vagas: ' + ${servico.numberOfVacancies}"></p>
+
+        <div class="mt-4">
+            <h3 class="font-semibold text-slate-800">Fiscais Inscritos:</h3>
+            <ul>
+                <li th:each="fiscal : ${servico.tax}">
+                    <span class="text-sm text-emerald-700" th:text="${fiscal.fullName}"></span>
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>
+
 </body>
 </html>

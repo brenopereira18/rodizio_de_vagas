@@ -12,6 +12,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -63,7 +64,10 @@ public class WorkEntity {
     private List<EnrollmentEntity> enrollments;
 
     @OneToMany(mappedBy = "workEntity", cascade = CascadeType.REMOVE, orphanRemoval = true)
-    private List<NotificationEntity> notificacoes;
+    private List<NotificationEntity> notifications;
+
+    @CreationTimestamp
+    private LocalDateTime createdAt;
 
     @Enumerated(EnumType.STRING)
     @NotNull
