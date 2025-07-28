@@ -14,14 +14,14 @@
 <div class="flex h-screen">
     <!-- Botão para abrir/fechar o menu (visível apenas em telas pequenas) -->
     <button id="menu-toggle"
-            class="fixed top-4 left-4 z-50 md:hidden p-2 bg-white rounded-md shadow-md focus:outline-none">
+            class="fixed top-4 left-4 z-50 lg:hidden p-2 bg-white rounded-md shadow-md focus:outline-none">
         <img src="/images/menu.svg" alt="Menu" class="w-6 h-6">
     </button>
 
     <!-- Sidebar -->
     <nav id="sidebar"
-         class="fixed md:static top-0 left-0 h-full w-60 md:w-64 bg-slate-200 p-4 transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out z-40 shadow-lg border-r border-slate-300">
-        <img class="mb-10 mt-16 md:mt-0 w-48 md:w-56" th:src="@{/images/logo.png}" alt="Logo da prefeitura">
+         class="fixed lg:static top-0 left-0 h-full w-60 lg:w-64 bg-slate-200 p-4 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out z-40 shadow-lg border-r border-slate-300">
+        <img class="mb-10 mt-16 lg:mt-0 w-48 md:w-56" th:src="@{/images/logo.png}" alt="Logo da prefeitura">
         <ul class="text-sm md:text-base">
             <li>
                 <a th:href="@{/home/servicos}"
@@ -62,7 +62,7 @@
     </nav>
 
     <!-- Conteúdo principal -->
-    <main class="flex-1 p-6 overflow-auto mt-12 md:mt-0" id="content">
+    <main class="flex-1 p-6 overflow-auto mt-12 lg:mt-0" id="content">
         <div th:replace="${content}"></div>
     </main>
 </div>

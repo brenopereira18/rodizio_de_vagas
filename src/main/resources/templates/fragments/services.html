@@ -22,13 +22,13 @@
         <select name="filter" id="filter" onchange="this.form.submit()"
                 class="border border-slate-300 rounded px-2 py-1 text-sm">
             <option value="DISPONIVEIS" th:selected="${filtro == 'DISPONIVEIS'}">Disponíveis</option>
-            <option value="INSCRITOS" th:selected="${filtro == 'INSCRITOS'}">Inscritos</option>
+            <option th:if="${usuario.userRole.name() == 'FISCAL'}" value="INSCRITOS" th:selected="${filtro == 'INSCRITOS'}">Inscritos</option>
             <option value="FREE" th:selected="${filtro == 'FREE'}">Serviços Abertos</option>
         </select>
     </form>
 
     <!-- Lista de serviços -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    <div class="grid grid-cols-[repeat(auto-fit,_minmax(260px,_1fr))] gap-4">
         <div th:each="servico : ${servicos}"
              class="bg-slate-200 p-6 rounded-2xl shadow-lg border border-slate-300 hover:shadow-xl transition-shadow duration-300 ease-in-out">
             <h2 class="text-base md:text-lg font-semibold text-slate-800" th:text="${servico.work.title}">Nome do Serviço</h2>
@@ -71,7 +71,7 @@
                 <!-- Mensagem para fiscais que ainda não têm prioridade -->
                 <div th:if="${!servico.hasPriority and (servico.enrollment == null or servico.enrollment.subscriptionStatus.name() == 'WAITING')}"
                      class="text-sm text-yellow-700 mt-2">
-                    No momento não está disponível para você
+                    Não está disponível para você no momento
                 </div>
 
                 <!-- Cancelar inscrição (se já estiver aceito) -->
