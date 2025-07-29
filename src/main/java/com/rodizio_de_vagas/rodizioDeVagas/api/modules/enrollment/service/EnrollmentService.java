@@ -180,7 +180,7 @@ public class EnrollmentService {
         workRepository.save(work);
     }
 
-    @Scheduled(cron = "0 0 * * * *")
+    @Scheduled(cron = "0 */10 * * * *")
     @Transactional
     public void processExpiredNotifications() {
         List<EnrollmentEntity> expiredEnrollments = this.enrollmentRepository.findExpiredWaitingEnrollments();
