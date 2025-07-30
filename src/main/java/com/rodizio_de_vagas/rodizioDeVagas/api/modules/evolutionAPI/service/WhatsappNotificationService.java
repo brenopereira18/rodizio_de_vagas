@@ -31,6 +31,6 @@ public class WhatsappNotificationService {
             .bodyToMono(String.class)
             .doOnSuccess(response -> System.out.println("Mensagem enviada com sucesso: " + response))
             .doOnError(error -> System.out.println("Erro ao enviar mensagem: " + error.getMessage()))
-            .subscribe(); // dispara a requisição de forma assíncrona
+            .subscribe();
     }
 }
