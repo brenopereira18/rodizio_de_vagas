@@ -133,7 +133,7 @@ public class EnrollmentService {
         this.enrollmentRepository.cancelOtherEnrollmentsInCategory(user.getId(), category, work.getId());
 
         worksWithRegistrationOnHold.forEach(pendingEnrollment ->
-            notificationService.notifyNextFiscal(pendingEnrollment.getWorkEntity(), category)
+            notificationService.notifyNextTax(pendingEnrollment.getWorkEntity(), category)
         );
     }
 
@@ -147,7 +147,7 @@ public class EnrollmentService {
         int totalAccepted = this.enrollmentRepository.countByWorkEntityAndSubscriptionStatus(work, SubscriptionStatus.ACCEPTED);
 
         if (totalAccepted < work.getNumberOfVacancies()) {
-            this.notificationService.notifyNextFiscal(work, category);
+            this.notificationService.notifyNextTax(work, category);
         } else {
             closeWork(work);
         }
@@ -172,7 +172,7 @@ public class EnrollmentService {
         }
 
         // Só neste ponto notifica o próximo da fila
-        this.notificationService.notifyNextFiscal(work, work.getCategory());
+        this.notificationService.notifyNextTax(work, work.getCategory());
     }
 
     private void closeWork(WorkEntity work) {
@@ -193,7 +193,7 @@ public class EnrollmentService {
             priorityQueueService.sendFiscalToEndOfQueue(enrollment.getUserEntity(), enrollment.getWorkEntity().getCategory());
 
             // Notifica o próximo fiscal
-            notificationService.notifyNextFiscal(enrollment.getWorkEntity(), enrollment.getWorkEntity().getCategory());
+            notificationService.notifyNextTax(enrollment.getWorkEntity(), enrollment.getWorkEntity().getCategory());
         }
     }
 
@@ -289,7 +289,7 @@ public class EnrollmentService {
         int totalAccepted = enrollmentRepository.countByWorkEntityAndSubscriptionStatus(work, SubscriptionStatus.ACCEPTED);
 
         if (totalAccepted < work.getNumberOfVacancies()) {
-            notificationService.notifyNextFiscal(work, work.getCategory());
+            notificationService.notifyNextTax(work, work.getCategory());
         } else {
             closeWork(work);
         }
