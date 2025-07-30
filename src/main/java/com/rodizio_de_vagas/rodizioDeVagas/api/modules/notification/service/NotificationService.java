@@ -13,11 +13,13 @@ import com.rodizio_de_vagas.rodizioDeVagas.api.modules.work.entity.Category;
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.work.entity.WorkEntity;
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.work.entity.WorkStatus;
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.work.repository.WorkRepository;
-import com.rodizio_de_vagas.rodizioDeVagas.api.modules.work.service.WorkService;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -51,14 +53,17 @@ public class NotificationService {
             .limit(numberOfVacancies)
             .toList();
 
-        for (PriorityQueueEntity taxQueue : selectedTax) {
-            UserEntity tax = taxQueue.getUserEntity();
-            notifyTax(tax, work);
-        }
+        Flux.fromIterable(selectedTax)
+            .delayElements(Duration.ofSeconds(8))
+            .doOnNext(taxQueue -> {
+                UserEntity tax = taxQueue.getUserEntity();
+                notifyTax(tax, work);
+            })
+            .subscribe();
     }
 
     @Transactional
-    public void notifyNextFiscal(WorkEntity work, Category category) {
+    public void notifyNextTax(WorkEntity work, Category category) {
         List<PriorityQueueEntity> queue = this.priorityQueueRepository.findByCategoryOrderByPositionInLine(category);
 
         // Verifica quem já foi notificado ou já está inscrito nesse trabalho.
@@ -78,17 +83,22 @@ public class NotificationService {
         }
 
         UserEntity nextFiscal = nextFiscalOpt.get().getUserEntity();
-        notifyTax(nextFiscal, work);
+        Mono.delay(Duration.ofSeconds(8))
+            .doOnNext(i -> notifyTax(nextFiscal, work))
+            .subscribe();
     }
 
     private void notifyTax(UserEntity tax, WorkEntity work) {
+        String link = "https://rodizio-de-vagas.onrender.com/home/servicos/disponiveis";
+        String message = "Olá " + tax.getFullName() + ", temos um serviço disponível da categoria " + work.getCategory() +
+            " no qual você tem prioridade. Acesse o link para visualizá-lo: " + link;
+
         NotificationEntity notification = NotificationEntity.builder()
             .workEntity(work)
             .userEntity(tax)
             .shippingDate(LocalDateTime.now())
             .responseDeadline(LocalDateTime.now().plusHours(6))
-            .message("Olá " + tax.getFullName() + ", temos um serviço disponível da categoria " + work.getCategory()  + " no qual você tem prioridade. Acesse o link para visualizá-lo.")
-            .workLink("url-do-trabalho")
+            .message(message)
             .build();
 
         this.notificationRepository.save(notification);
@@ -100,6 +110,6 @@ public class NotificationService {
             .build();
 
         this.enrollmentRepository.save(enrollment);
-        this.whatsappNotificationService.sendMessage(tax.getPhoneNumber(), notification.getMessage());
+        whatsappNotificationService.sendMessage(tax.getPhoneNumber(), notification.getMessage());
     }
 }
