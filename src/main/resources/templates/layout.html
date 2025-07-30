@@ -44,7 +44,7 @@
                     <span>Fila de prioridade</span>
                 </a>
             </li>
-            <li th:if="${usuario.userRole.name() == 'ADMINISTRADOR'}">
+            <li th:if="${usuario.userRole.name() == 'ADMINISTRADOR' or usuario.userRole.name() == 'SUPERVISOR'}">
                 <a th:href="@{/home/inscricoes}"
                    class="flex items-center w-full py-2 px-4 rounded-md hover:bg-emerald-400">
                     <img th:src="@{/images/inscricoes.svg}" alt="Ícone" class="mr-2">
