@@ -47,6 +47,7 @@ public class WorkService {
             .title(dto.title())
             .location(dto.location())
             .serviceDate(dto.serviceDate())
+            .serviceEndDate(dto.serviceEndDate())
             .manager(manager)
             .registrationLimit(dto.serviceDate().minusDays(1))
             .category(dto.category())
@@ -183,6 +184,7 @@ public class WorkService {
         work.setTitle(dto.title());
         work.setLocation(dto.location());
         work.setServiceDate(dto.serviceDate());
+        work.setServiceEndDate(dto.serviceEndDate());
         work.setRegistrationLimit(dto.serviceDate().minusDays(1));
         work.setManager(manager);
         work.setCategory(dto.category());

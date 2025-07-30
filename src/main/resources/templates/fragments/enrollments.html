@@ -12,14 +12,16 @@
         <span th:if="${!#lists.isEmpty(servicos)}">Serviços</span>
     </h1>
 </div>
-<div class="grid grid-cols-[repeat(auto-fit,_minmax(240px,_1fr))] gap-4">
+<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-4">
     <div th:each="servico : ${servicos}"
          class="bg-slate-200 p-6 rounded-2xl shadow-lg border border-slate-300 hover:shadow-xl transition-shadow duration-300 ease-in-out">
 
         <h2 class="text-base md:text-lg font-semibold text-slate-800" th:text="${servico.title}">Nome do Serviço</h2>
         <p class="text-sm text-slate-600" th:text="'Local: ' + ${servico.location}"></p>
         <p class="text-sm text-slate-600"
-           th:text="'Data: ' + ${#temporals.format(servico.serviceDate, 'dd/MM/yyyy  - HH:mm')}"></p>
+           th:text="'Início: ' + ${#temporals.format(servico.serviceDate, 'dd/MM/yyyy  - HH:mm')}"></p>
+        <p class="text-sm text-slate-600"
+           th:text="'Término: ' + ${#temporals.format(servico.serviceEndDate, 'dd/MM/yyyy  - HH:mm')}"></p>
         <p class="text-sm text-slate-600" th:text="'Supervisor: ' + ${servico.manager.fullName}"></p>
         <p class="text-sm text-slate-600" th:text="'Categoria: ' + ${servico.category.category}"></p>
         <p class="text-sm text-slate-600" th:text="'Número de vagas: ' + ${servico.numberOfVacancies}"></p>

@@ -22,7 +22,9 @@
         <select name="filter" id="filter" onchange="this.form.submit()"
                 class="border border-slate-300 rounded px-2 py-1 text-sm">
             <option value="DISPONIVEIS" th:selected="${filtro == 'DISPONIVEIS'}">Disponíveis</option>
-            <option th:if="${usuario.userRole.name() == 'FISCAL'}" value="INSCRITOS" th:selected="${filtro == 'INSCRITOS'}">Inscritos</option>
+            <option th:if="${usuario.userRole.name() == 'FISCAL'}" value="INSCRITOS"
+                    th:selected="${filtro == 'INSCRITOS'}">Inscritos
+            </option>
             <option value="FREE" th:selected="${filtro == 'FREE'}">Serviços Abertos</option>
         </select>
     </form>
@@ -30,11 +32,14 @@
     <!-- Lista de serviços -->
     <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-4">
         <div th:each="servico : ${servicos}"
-             class="bg-slate-200 p-6 rounded-2xl shadow-lg border border-slate-300 hover:shadow-xl transition-shadow duration-300 ease-in-out">
-            <h2 class="text-base md:text-lg font-semibold text-slate-800" th:text="${servico.work.title}">Nome do Serviço</h2>
+             class="bg-slate-200 p-6 rounded-2xl shadow-lg border border-slate-300 hover:shadow-xl transition-shadow duration-300 ease-in-out flex flex-col justify-between h-full">
+            <h2 class="text-base md:text-lg font-semibold text-slate-800" th:text="${servico.work.title}">Nome do
+                Serviço</h2>
             <p class="text-sm text-slate-600" th:text="'Local: ' + ${servico.work.location}"></p>
             <p class="text-sm text-slate-600"
-               th:text="'Data: ' + ${#temporals.format(servico.work.serviceDate, 'dd/MM/yyyy  - HH:mm')}"></p>
+               th:text="'Início: ' + ${#temporals.format(servico.work.serviceDate, 'dd/MM/yyyy  - HH:mm')}"></p>
+            <p class="text-sm text-slate-600"
+               th:text="'Término: ' + ${#temporals.format(servico.work.serviceEndDate, 'dd/MM/yyyy  - HH:mm')}"></p>
             <p class="text-sm text-slate-600" th:text="'Supervisor: ' + ${servico.work.manager.fullName}"></p>
             <p class="text-sm text-slate-600" th:text="'Categoria: ' + ${servico.work.category.category}"></p>
             <p class="text-sm text-slate-600" th:text="'Vagas: ' + ${servico.work.numberOfVacancies}"></p>
@@ -75,7 +80,8 @@
                 </div>
 
                 <!-- Cancelar inscrição (se já estiver aceito) -->
-                <div th:if="${servico.enrollment != null and servico.enrollment.subscriptionStatus.name() == 'ACCEPTED'}" class="text-xs md:text-sm">
+                <div th:if="${servico.enrollment != null and servico.enrollment.subscriptionStatus.name() == 'ACCEPTED'}"
+                     class="text-xs md:text-sm">
                     <form th:action="@{'/inscricoes/cancelar/' + ${servico.enrollment.id}}" method="post">
                         <button type="submit" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded">
                             Cancelar inscrição
@@ -100,6 +106,7 @@
                         th:data-title="${servico.work.title}"
                         th:data-location="${servico.work.location}"
                         th:data-servicedate="${#temporals.format(servico.work.serviceDate, 'yyyy-MM-dd''T''HH:mm')}"
+                        th:data-serviceenddate="${#temporals.format(servico.work.serviceEndDate, 'yyyy-MM-dd''T''HH:mm')}"
                         th:data-managerid="${servico.work.manager.id}"
                         th:data-category="${servico.work.category.name()}"
                         th:data-vacancies="${servico.work.numberOfVacancies}"
@@ -121,30 +128,35 @@
     <div id="modal-servico" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
         <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-md mx-4">
             <h2 class="text-lg md:text-xl font-bold mb-4">Novo Serviço</h2>
-            <form th:action="@{/home/servicos}" method="post" class="flex flex-col gap-4">
+            <form th:action="@{/home/servicos}" method="post" class="flex flex-col gap-4 text-sm">
                 <input type="text" name="title" placeholder="Título" required
-                       class="border border-slate-300 rounded px-3 py-2 w-full"/>
+                       class="border border-slate-300 rounded px-2 py-1 w-full"/>
                 <input type="text" name="location" placeholder="Local" required
-                       class="border border-slate-300 rounded px-3 py-2 w-full"/>
+                       class="border border-slate-300 rounded px-2 py-1 w-full"/>
                 <div class="flex flex-col w-full">
-                    <label for="serviceDate" class="block md:hidden text-sm text-slate-700 mb-1">Data e Hora</label>
+                    <label for="serviceDate" class="text-sm text-slate-700 mb-1">Data e Hora de início</label>
                     <input type="datetime-local" name="serviceDate" id="serviceDate" required
-                           class="border border-slate-300 rounded px-3 py-2 min-w-0"/>
+                           class="border border-slate-300 rounded px-2 py-1 min-w-0"/>
                 </div>
-                <select name="managerId" required class="border border-slate-300 rounded px-3 py-2 w-full">
+                <div class="flex flex-col w-full">
+                    <label for="serviceEndDate" class="text-sm text-slate-700 mb-1">Data e Hora de término</label>
+                    <input type="datetime-local" name="serviceEndDate" id="serviceEndDate" required
+                           class="border border-slate-300 rounded px-2 py-1 w-full"/>
+                </div>
+                <select name="managerId" required class="border border-slate-300 rounded px-2 py-1 w-full">
                     <option value="">Selecione um supervisor</option>
                     <option th:each="supervisor : ${supervisores}"
                             th:value="${supervisor.id}"
                             th:text="${supervisor.fullName}"></option>
                 </select>
-                <select name="category" required class="border border-slate-300 rounded px-3 py-2 w-full">
+                <select name="category" required class="border border-slate-300 rounded px-2 py-1 w-full">
                     <option value="">Selecione uma categoria</option>
                     <option th:each="categoria : ${categorias}"
                             th:value="${categoria.name()}"
                             th:text="${categoria.category}"></option>
                 </select>
                 <input type="number" name="numberOfVacancies" placeholder="Número de Vagas" required
-                       class="border border-slate-300 rounded px-3 py-2 w-full"/>
+                       class="border border-slate-300 rounded px-2 py-1 w-full"/>
 
                 <div class="flex justify-end gap-2 text-xs md:text-base">
                     <button type="button"
@@ -168,28 +180,33 @@
                   class="flex flex-col gap-4">
                 <input type="hidden" name="id" id="edit-id"/>
                 <input type="text" name="title" id="edit-title" placeholder="Título" required
-                       class="border border-slate-300 rounded px-3 py-2 w-full"/>
+                       class="border border-slate-300 rounded px-2 py-1 w-full"/>
                 <input type="text" name="location" id="edit-location" placeholder="Local" required
-                       class="border border-slate-300 rounded px-3 py-2 w-full"/>
+                       class="border border-slate-300 rounded px-2 py-1 w-full"/>
                 <div class="flex flex-col w-full">
-                    <label for="serviceDate" class="block md:hidden text-sm text-slate-700 mb-1">Data e Hora</label>
+                    <label for="serviceDate" class="text-sm text-slate-700 mb-1">Data e Hora</label>
                     <input type="datetime-local" name="serviceDate" id="edit-serviceDate" placeholder="Data" required
-                        class="border border-slate-300 rounded px-3 py-2 min-w-0"/>
+                           class="border border-slate-300 rounded px-2 py-1 min-w-0"/>
+                </div>
+                <div class="flex flex-col w-full">
+                    <label for="serviceEndDate" class="text-sm text-slate-700 mb-1">Data e Hora de término</label>
+                    <input type="datetime-local" name="serviceEndDate" id="edit-serviceEndDate" required
+                           class="border border-slate-300 rounded px-2 py-1 w-full"/>
                 </div>
                 <select name="managerId" id="edit-managerId" required
-                        class="border border-slate-300 rounded px-3 py-2 w-full">
+                        class="border border-slate-300 rounded px-2 py-1 w-full">
                     <option th:each="supervisor : ${supervisores}"
                             th:value="${supervisor.id}"
                             th:text="${supervisor.fullName}"></option>
                 </select>
                 <select name="category" id="edit-category" required
-                        class="border border-slate-300 rounded px-3 py-2 w-full">
+                        class="border border-slate-300 rounded px-2 py-1 w-full">
                     <option th:each="categoria : ${categorias}"
                             th:value="${categoria.name()}"
                             th:text="${categoria.category}"></option>
                 </select>
                 <input type="number" name="numberOfVacancies" id="edit-numberOfVacancies" placeholder="Número de Vagas"
-                       required class="border border-slate-300 rounded px-3 py-2 w-full"/>
+                       required class="border border-slate-300 rounded px-2 py-1 w-full"/>
 
                 <div class="flex justify-end gap-2 text-xs md:text-base">
                     <button type="button"
@@ -210,6 +227,7 @@
             document.getElementById('edit-title').value = button.dataset.title;
             document.getElementById('edit-location').value = button.dataset.location;
             document.getElementById('edit-serviceDate').value = button.dataset.servicedate;
+            document.getElementById('edit-serviceEndDate').value = button.dataset.serviceenddate;
             document.getElementById('edit-managerId').value = button.dataset.managerid;
             document.getElementById('edit-category').value = button.dataset.category;
             document.getElementById('edit-numberOfVacancies').value = button.dataset.vacancies;
