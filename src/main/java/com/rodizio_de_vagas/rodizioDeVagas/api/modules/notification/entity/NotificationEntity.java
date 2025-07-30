@@ -41,10 +41,6 @@ public class NotificationEntity {
     @Column(name = "prazo_de_resposta", nullable = false)
     private LocalDateTime responseDeadline;
 
-    @Column(name = "link_do_trabalho", nullable = false)
-    @NotNull
-    private String workLink;
-
     @Column(name = "mensagem", nullable = false)
     @NotNull
     private String message;
