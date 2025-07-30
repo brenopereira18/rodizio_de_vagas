@@ -97,7 +97,7 @@ public class NotificationService {
             .workEntity(work)
             .userEntity(tax)
             .shippingDate(LocalDateTime.now())
-            .responseDeadline(LocalDateTime.now().plusHours(6))
+            .responseDeadline(LocalDateTime.now().plusHours(4))
             .message(message)
             .build();
 
