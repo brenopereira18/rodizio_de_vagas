@@ -42,6 +42,11 @@ public class WorkEntity {
     @NotNull
     private LocalDateTime serviceDate;
 
+    @Column(name = "termino_do_servico", nullable = false)
+    @Future(message = "A data do serviço ainda não pode ter ocorrido", groups = OnCreate.class)
+    @NotNull
+    private LocalDateTime serviceEndDate;
+
     @ManyToOne
     @JoinColumn(name = "supervisor_id")
     private UserEntity manager;

@@ -12,6 +12,10 @@ public record RequestCreateOrUpdateWorkDTO(
 
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
     LocalDateTime serviceDate,
+
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
+    LocalDateTime serviceEndDate,
+
     Long managerId,
     Category category,
     Integer numberOfVacancies

@@ -10,6 +10,7 @@ public record ResponseWorkWithTaxDTO(
     String title,
     String location,
     LocalDateTime serviceDate,
+    LocalDateTime serviceEndDate,
     UserEntity manager,
     Category category,
     int numberOfVacancies,

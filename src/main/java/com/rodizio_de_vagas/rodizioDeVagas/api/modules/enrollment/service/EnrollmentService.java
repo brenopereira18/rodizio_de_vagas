@@ -247,6 +247,7 @@ public class EnrollmentService {
                     work.getTitle(),
                     work.getLocation(),
                     work.getServiceDate(),
+                    work.getServiceEndDate(),
                     work.getManager(),
                     work.getCategory(),
                     work.getNumberOfVacancies(),
