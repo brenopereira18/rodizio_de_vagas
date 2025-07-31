@@ -12,6 +12,7 @@ import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -120,6 +121,7 @@ public class PriorityQueueService {
     public Map<Category, List<PriorityQueueEntity>> getAllQueuesGroupedByCategory() {
         List<PriorityQueueEntity> allQueues = priorityQueueRepository.findAll();
         return allQueues.stream()
+            .sorted(Comparator.comparingInt(PriorityQueueEntity::getPositionInLine))
             .collect(Collectors.groupingBy(PriorityQueueEntity::getCategory));
     }
 }
