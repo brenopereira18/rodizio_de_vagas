@@ -55,33 +55,45 @@ public class PriorityQueueService {
         }
     }
 
+    @Transactional
     public void deactivateFiscalFromCategory(String registration, Category category) {
-        PriorityQueueEntity queue = this.priorityQueueRepository.findByUserEntityRegistrationAndCategory(registration, category)
+        List<PriorityQueueEntity> priorityQueue = this.priorityQueueRepository.findByCategoryOrderByPositionInLineWithLock(category);
+
+        PriorityQueueEntity queue = priorityQueue.stream()
+            .filter(q -> q.getUserEntity().getRegistration().equals(registration))
+            .findFirst()
             .orElseThrow(() -> new ResourceNotFoundException("Fiscal não encontrado na fila"));
 
         int leavingPosition = queue.getPositionInLine();
         this.priorityQueueRepository.delete(queue);
 
-        // Atualizar posições
-        List<PriorityQueueEntity> remaining = this.priorityQueueRepository.findByCategoryOrderByPositionInLine(category);
-        for (PriorityQueueEntity q : remaining) {
+        for (PriorityQueueEntity q : priorityQueue) {
             if (q.getPositionInLine() > leavingPosition) {
                 q.setPositionInLine(q.getPositionInLine() - 1);
-                this.priorityQueueRepository.save(q);
             }
         }
+
+        this.priorityQueueRepository.saveAll(priorityQueue);
+        this.priorityQueueRepository.flush();
     }
 
+    @Transactional
     public void activateFiscalInCategory(String registration, Category category) {
-        int maxPosition = this.priorityQueueRepository.findMaxPositionByCategory(category).orElse(0);
+        List<PriorityQueueEntity> queue = this.priorityQueueRepository.findByCategoryOrderByPositionInLineWithLock(category);
 
-        PriorityQueueEntity queue = PriorityQueueEntity.builder()
-            .userEntity(userRepository.findByRegistration(registration).orElseThrow(() -> new ResourceNotFoundException("Fiscal não encontrado")))
+        int maxPosition = queue.stream()
+            .mapToInt(PriorityQueueEntity::getPositionInLine)
+            .max()
+            .orElse(0);
+
+        PriorityQueueEntity newQueue = PriorityQueueEntity.builder()
+            .userEntity(userRepository.findByRegistration(registration)
+                .orElseThrow(() -> new ResourceNotFoundException("Fiscal não encontrado")))
             .category(category)
             .positionInLine(maxPosition + 1)
             .build();
 
-        this.priorityQueueRepository.save(queue);
+        this.priorityQueueRepository.save(newQueue);
     }
 
     // Passa os fiscais para o final da fila
