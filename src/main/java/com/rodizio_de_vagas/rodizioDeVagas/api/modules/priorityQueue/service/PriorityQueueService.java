@@ -12,9 +12,7 @@ import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -96,38 +94,72 @@ public class PriorityQueueService {
         this.priorityQueueRepository.save(newQueue);
     }
 
-    // Passa os fiscais para o final da fila
+    /**
+     * Move um conjunto de fiscais específicos para o final da fila de uma determinada categoria.
+     * Esta operação é atômica para a categoria.
+     *
+     * @param userIdsToMoveToEndOfQueue Um conjunto de IDs de fiscais a serem movidos.
+     * @param category A categoria da fila de prioridade.
+     */
     @Transactional
-    public void sendFiscalToEndOfQueue(UserEntity user, Category category) {
-        // Bloqueia toda a fila da categoria
-        List<PriorityQueueEntity> priorityQueue = this.priorityQueueRepository.findByCategoryOrderByPositionInLineWithLock(category);
+    public void sendFiscalToEndOfQueue(Set<Long> userIdsToMoveToEndOfQueue, Category category) {
+        if (userIdsToMoveToEndOfQueue == null || userIdsToMoveToEndOfQueue.isEmpty()) {
+            return;
+        }
 
-        PriorityQueueEntity queue = priorityQueue.stream()
-            .filter(q -> q.getUserEntity().getId().equals(user.getId()))
-            .findFirst()
-            .orElseThrow(() -> new ResourceNotFoundException("Fiscal não encontrado na fila"));
+        // Bloqueia toda a fila da categoria para escrita para evitar concorrência externa.
+        List<PriorityQueueEntity> currentQueue = this.priorityQueueRepository
+            .findByCategoryOrderByPositionInLineWithLock(category);
 
-        int oldPosition = queue.getPositionInLine();
+        if (currentQueue.isEmpty()) {
+            return;
+        }
 
-        // Remove o fiscal com valor impossível
-        queue.setPositionInLine(-1 * queue.getId().intValue());
-        this.priorityQueueRepository.save(queue);
-        this.priorityQueueRepository.flush(); // Garante que o banco reconheceu que ele saiu
+        // Separa os fiscais em duas listas: os que serão movidos e os que permanecerão
+        List<PriorityQueueEntity> fiscalsToBeMoved = new ArrayList<>();
+        List<PriorityQueueEntity> remainingFiscals = new ArrayList<>();
 
-        // Atualiza as posições
-        int position = 1;
-        for (PriorityQueueEntity q : priorityQueue) {
-            if (!q.getId().equals(queue.getId())) { // Ignora o fiscal que saiu temporariamente
-                q.setPositionInLine(position++);
+        for (PriorityQueueEntity pqEntity : currentQueue) {
+            if (userIdsToMoveToEndOfQueue.contains(pqEntity.getUserEntity().getId())) {
+                fiscalsToBeMoved.add(pqEntity);
+            } else {
+                remainingFiscals.add(pqEntity);
             }
         }
-        this.priorityQueueRepository.saveAll(priorityQueue);
-        this.priorityQueueRepository.flush(); // Garante que a fila foi atualizada sem sobreposição
 
-        // Coloca o fiscal no final
-        queue.setPositionInLine(position);
-        this.priorityQueueRepository.save(queue);
-        this.priorityQueueRepository.flush(); // Garante persistência final
+        // Reorganiza as posições dos fiscais que permanecem na parte inicial da fila
+        int currentPosition = 1;
+        for (PriorityQueueEntity fiscal : remainingFiscals) {
+            fiscal.setPositionInLine(currentPosition++);
+        }
+
+        // Atribui as novas posições aos fiscais que foram movidos para o final
+        // E os adiciona à lista 'remainingFiscals' para serem salvos junto
+        for (PriorityQueueEntity fiscal : fiscalsToBeMoved) {
+            fiscal.setPositionInLine(currentPosition++);
+            remainingFiscals.add(fiscal);
+        }
+
+        // Salva todas as entidades da fila de uma vez.
+        // Com a constraint DEFERRABLE, o banco de dados só verificará a unicidade
+        // (categoria, posicao_na_fila) no COMMIT da transação.
+        this.priorityQueueRepository.saveAll(remainingFiscals);
+        this.priorityQueueRepository.flush();
+    }
+
+    /**
+     * Move um único fiscal para o final da fila de uma determinada categoria.
+     * Este é um método de conveniência que chama a versão mais robusta.
+     *
+     * @param user O UserEntity do fiscal a ser movido.
+     * @param category A categoria da fila de prioridade.
+     */
+    @Transactional // A transação é necessária aqui também
+    public void sendFiscalToEndOfQueue(UserEntity user, Category category) {
+        Set<Long> userIds = new HashSet<>();
+        userIds.add(user.getId());
+        // Chama o método que lida com a reorganização da fila de forma robusta
+        this.sendFiscalToEndOfQueue(userIds, category);
     }
 
     public Map<Category, List<PriorityQueueEntity>> getAllQueuesGroupedByCategory() {

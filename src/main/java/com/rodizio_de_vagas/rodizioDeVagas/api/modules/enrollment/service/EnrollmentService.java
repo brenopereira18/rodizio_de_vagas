@@ -22,10 +22,9 @@ import org.springframework.stereotype.Service;
 import java.nio.file.AccessDeniedException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.LinkedHashMap;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
+import java.time.LocalTime;
+import java.time.ZoneId;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -183,17 +182,49 @@ public class EnrollmentService {
     @Scheduled(cron = "0 */10 * * * *")
     @Transactional
     public void processExpiredNotifications() {
+        LocalTime now = LocalTime.now(ZoneId.of("America/Sao_Paulo"));
+        if (now.isBefore(LocalTime.of(7, 0)) || now.isAfter(LocalTime.of(20, 0))) {
+            System.out.println("Fora do horário útil (entre 20h e 7h), não processando inscrições expiradas agora.");
+            return;
+        }
+
         List<EnrollmentEntity> expiredEnrollments = this.enrollmentRepository.findExpiredWaitingEnrollments();
 
-        for (EnrollmentEntity enrollment : expiredEnrollments) {
-            enrollment.setSubscriptionStatus(SubscriptionStatus.EXPIRED);
-            this.enrollmentRepository.save(enrollment);
+        // Agrupar as inscrições expiradas por categoria para processamento isolado
+        Map<Category, List<EnrollmentEntity>> groupedByCategories = expiredEnrollments.stream()
+            .collect(Collectors.groupingBy(e -> e.getWorkEntity().getCategory()));
 
-            // Move fiscal para o final da fila
-            priorityQueueService.sendFiscalToEndOfQueue(enrollment.getUserEntity(), enrollment.getWorkEntity().getCategory());
+        for (Map.Entry<Category, List<EnrollmentEntity>> entry : groupedByCategories.entrySet()) {
+            Category category = entry.getKey();
+            List<EnrollmentEntity> enrollmentsInThisCategory = entry.getValue();
 
-            // Notifica o próximo fiscal
-            notificationService.notifyNextTax(enrollment.getWorkEntity(), enrollment.getWorkEntity().getCategory());
+            // Usa a sincronização por categoria para evitar que threads diferentes manipulem a mesma fila
+            synchronized (category.toString().intern()) {
+                // 1. Coleta os IDs dos fiscais cujas inscrições expiraram nesta categoria
+                Set<Long> userIdsToMoveToEndOfQueue = enrollmentsInThisCategory.stream()
+                    .map(e -> e.getUserEntity().getId())
+                    .collect(Collectors.toSet());
+
+                // 2. Chama o método para enviar os fiscais para o final da fila de uma vez
+                // Este método cuidará da reorganização da fila de forma atômica para a categoria
+                this.priorityQueueService.sendFiscalToEndOfQueue(userIdsToMoveToEndOfQueue, category);
+
+                // 3. Atualiza o status das inscrições
+                for (EnrollmentEntity enrollment : enrollmentsInThisCategory) {
+                    enrollment.setSubscriptionStatus(SubscriptionStatus.EXPIRED);
+                    this.enrollmentRepository.save(enrollment);
+                }
+
+                // 4. Notifica o próximo fiscal (assumindo que a notificação é para a próxima vaga disponível na categoria)
+                // É crucial que a fila já esteja atualizada no banco de dados neste ponto para que a notificação
+                // pegue o fiscal correto.
+                if (!enrollmentsInThisCategory.isEmpty()) {
+                    // Pode ser necessário ajustar como você determina qual 'WorkEntity' usar aqui,
+                    // caso haja múltiplas vagas para a mesma categoria expirando ao mesmo tempo.
+                    // Para simplificar, estamos pegando a primeira vaga da lista.
+                    notificationService.notifyNextTax(enrollmentsInThisCategory.get(0).getWorkEntity(), category);
+                }
+            }
         }
     }
 
@@ -244,6 +275,7 @@ public class EnrollmentService {
             .map(entry -> {
                 WorkEntity work = entry.getKey();
                 return new ResponseWorkWithTaxDTO(
+                    work.getId(),
                     work.getTitle(),
                     work.getLocation(),
                     work.getServiceDate(),
@@ -251,6 +283,7 @@ public class EnrollmentService {
                     work.getManager(),
                     work.getCategory(),
                     work.getNumberOfVacancies(),
+                    work.getObservation(),
                     entry.getValue()
                 );
             })
