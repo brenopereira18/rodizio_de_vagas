@@ -25,6 +25,34 @@
         <p class="text-sm text-slate-600" th:text="'Supervisor: ' + ${servico.manager.fullName}"></p>
         <p class="text-sm text-slate-600" th:text="'Categoria: ' + ${servico.category.category}"></p>
         <p class="text-sm text-slate-600" th:text="'Número de vagas: ' + ${servico.numberOfVacancies}"></p>
+        <!-- Exibir observação se existir -->
+        <div th:if="${servico.observation != null}" class="mt-2">
+            <p class="text-sm text-slate-600">
+                <strong></strong> <span th:text="${servico.observation}" style="white-space: pre-wrap;"></span>
+            </p>
+        </div>
+
+        <!-- Botão para mostrar/ocultar form -->
+        <button type="button"
+                class="mt-3 text-sm text-emerald-600 hover:underline"
+                th:onclick="'document.getElementById(\'form-observacao-' + ${servico.id} + '\').classList.toggle(\'hidden\')'">
+            Adicionar/Editar Observação
+        </button>
+
+        <!-- Formulário para enviar a observação -->
+        <form th:id="'form-observacao-' + ${servico.id}"
+              th:action="@{/home/inscricoes/servicos/{id}/observacao(id=${servico.id})}"
+              method="post"
+              class="hidden mt-2">
+        <textarea name="observation"
+                  rows="3"
+                  class="w-full rounded border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 text-sm"
+                  th:text="${servico.observation}"></textarea>
+            <button type="submit"
+                    class="mt-2 px-3 py-1 bg-emerald-600 text-white rounded hover:bg-emerald-700 text-sm">
+                Salvar
+            </button>
+        </form>
 
         <div class="mt-4">
             <h3 class="font-semibold text-slate-800">Fiscais Inscritos:</h3>

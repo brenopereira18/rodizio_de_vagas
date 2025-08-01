@@ -224,4 +224,12 @@ public class WorkService {
         }
         this.workRepository.saveAll(works);
     }
+
+    public void updateObservation(Long id, String observation) {
+        WorkEntity servico = workRepository.findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException("Serviço não encontrado"));
+
+        servico.setObservation(observation);
+        workRepository.save(servico);
+    }
 }
