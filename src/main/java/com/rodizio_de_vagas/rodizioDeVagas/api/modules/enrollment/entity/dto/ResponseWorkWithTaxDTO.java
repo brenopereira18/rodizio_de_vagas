@@ -7,6 +7,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public record ResponseWorkWithTaxDTO(
+    Long id,
     String title,
     String location,
     LocalDateTime serviceDate,
@@ -14,5 +15,6 @@ public record ResponseWorkWithTaxDTO(
     UserEntity manager,
     Category category,
     int numberOfVacancies,
+    String observation,
     List<ResponseTaxInfosDTO> tax
 ) {}

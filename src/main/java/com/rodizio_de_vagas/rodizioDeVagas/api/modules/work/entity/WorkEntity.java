@@ -79,4 +79,7 @@ public class WorkEntity {
     @Column(name = "status_do_servico", nullable = false)
     @Builder.Default
     private WorkStatus workStatus = WorkStatus.OPEN;
+
+    @Column(name = "observacao", columnDefinition = "TEXT")
+    private String observation;
 }
