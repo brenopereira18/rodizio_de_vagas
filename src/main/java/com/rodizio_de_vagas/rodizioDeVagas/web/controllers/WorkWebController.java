@@ -42,7 +42,7 @@ public class WorkWebController {
 
         model.addAttribute("filtro", filter);
         model.addAttribute("pageTitle", "Serviços");
-        model.addAttribute("supervisores", userService.getAllManagers());
+        model.addAttribute("supervisores", userService.getAllAdminsAndManagers());
         model.addAttribute("categorias", Category.values());
         model.addAttribute("servicos", services);
         model.addAttribute("WAITING", SubscriptionStatus.WAITING);
