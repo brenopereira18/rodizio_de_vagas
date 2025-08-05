@@ -28,6 +28,8 @@ public class SecurityConfigure {
             .authorizeHttpRequests(authorize -> authorize
                 .requestMatchers("/css/**", "/js/**", "/images/**").permitAll()               .requestMatchers(HttpMethod.POST, "/auth/login").permitAll()
                 .requestMatchers(HttpMethod.GET, "/fiscal/login").permitAll()
+                .requestMatchers("/recuperar-senha").permitAll()
+                .requestMatchers("/resetar-senha").permitAll()
                 .anyRequest().authenticated()
             ).formLogin(form -> form
                 .loginPage("/fiscal/login")
