@@ -17,6 +17,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.stream.Stream;
 
 @Service
 public class UserService {
@@ -77,6 +78,14 @@ public class UserService {
          ).toList();
      }
 
+     public List<ResponseUserDTO> getAllAdmins() {
+         List<UserEntity> admins = this.userRepository.findByUserRole(UserRole.ADMINISTRADOR);
+
+         return admins.stream().map(
+             s -> new ResponseUserDTO(s.getId(), s.getFullName(), s.getRegistration(), s.getPhoneNumber())
+         ).toList();
+     }
+
      public List<ResponseUserDTO> getAllManagers() {
         List<UserEntity> managers = this.userRepository.findByUserRole(UserRole.SUPERVISOR);
 
@@ -84,6 +93,14 @@ public class UserService {
             s -> new ResponseUserDTO(s.getId(), s.getFullName(), s.getRegistration(), s.getPhoneNumber())
         ).toList();
      }
+
+    public List<ResponseUserDTO> getAllAdminsAndManagers() {
+        List<ResponseUserDTO> admins = getAllAdmins();
+        List<ResponseUserDTO> managers = getAllManagers();
+
+        List<ResponseUserDTO> combinedList = Stream.concat(admins.stream(), managers.stream()).toList();
+        return combinedList;
+    }
 
      public UserEntity updateUser(String registration, RequestUpdateUserDTO dto) {
         UserEntity user = this.userRepository.findByRegistration(registration).orElseThrow(() ->
