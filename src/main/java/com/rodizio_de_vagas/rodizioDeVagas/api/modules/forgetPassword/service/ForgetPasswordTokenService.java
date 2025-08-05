@@ -59,7 +59,7 @@ public class ForgetPasswordTokenService {
         this.forgetPasswordTokenRepository.save(resetToken);
 
         // Use o tokenString recém-gerado, que agora está no objeto resetToken salvo/atualizado.
-        String resetUrl = "http://localhost:8080/resetar-senha?token=" + resetToken.getToken(); // Ajuste para sua URL
+        String resetUrl = "http://rodizio-de-vagas.onrender.com/resetar-senha?token=" + resetToken.getToken();
         String message = "Olá, " + user.getFullName() + "! Para redefinir sua senha, clique no link: " + resetUrl + "\n\nEste link é válido por 15 minutos.";
 
         whatsappNotificationService.sendMessage(phoneNumber, message);
