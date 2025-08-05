@@ -10,7 +10,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Entity
 @Table(name = "notificacao")
@@ -36,10 +36,10 @@ public class NotificationEntity {
 
     @CreationTimestamp
     @Column(name = "data_de_envio")
-    private LocalDateTime shippingDate;
+    private Instant shippingDate;
 
     @Column(name = "prazo_de_resposta", nullable = false)
-    private LocalDateTime responseDeadline;
+    private Instant responseDeadline;
 
     @Column(name = "mensagem", nullable = false)
     @NotNull
