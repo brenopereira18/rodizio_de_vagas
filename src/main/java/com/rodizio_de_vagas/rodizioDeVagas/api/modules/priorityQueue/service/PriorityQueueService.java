@@ -74,7 +74,6 @@ public class PriorityQueueService {
 
         // 6. Salvar todas as entidades restantes com as novas posições
         this.priorityQueueRepository.saveAll(priorityQueue);
-        this.priorityQueueRepository.flush();
     }
 
     @Transactional
