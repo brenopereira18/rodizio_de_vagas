@@ -141,19 +141,16 @@ public class EnrollmentService {
         this.enrollmentRepository.save(enrollment);
 
         WorkEntity work = enrollment.getWorkEntity();
-        Category category = work.getCategory();
-
         int totalAccepted = this.enrollmentRepository.countByWorkEntityAndSubscriptionStatus(work, SubscriptionStatus.ACCEPTED);
 
-        if (totalAccepted < work.getNumberOfVacancies()) {
-            this.notificationService.notifyNextTax(work, category);
-        } else {
+        if (totalAccepted >= work.getNumberOfVacancies()) {
             closeWork(work);
         }
     }
 
     private void finalizeWorkStatus(WorkEntity work) {
         int totalAccepted = this.enrollmentRepository.countByWorkEntityAndSubscriptionStatus(work, SubscriptionStatus.ACCEPTED);
+        int waitingCount = this.enrollmentRepository.countByWorkEntityAndSubscriptionStatus(work, SubscriptionStatus.WAITING);
         int totalVacancies = work.getNumberOfVacancies();
 
         if (totalAccepted >= totalVacancies) {
@@ -161,11 +158,7 @@ public class EnrollmentService {
             return;
         }
 
-        // Só notificar próximo fiscal se ninguém com prioridade estiver pendente
-        List<EnrollmentEntity> waitingList = this.enrollmentRepository
-            .findByWorkEntityIdAndSubscriptionStatus(work.getId(), SubscriptionStatus.WAITING);
-
-        if (!waitingList.isEmpty()) {
+        if (totalAccepted + waitingCount >= totalVacancies) {
             // Ainda há fiscais aguardando, não notifica ninguém novo ainda
             return;
         }
