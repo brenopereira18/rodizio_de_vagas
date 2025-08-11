@@ -113,7 +113,7 @@ public class NotificationService {
             .workEntity(work)
             .userEntity(tax)
             .shippingDate(Instant.now())
-            .responseDeadline(Instant.now().plus(5, ChronoUnit.MINUTES))
+            .responseDeadline(Instant.now().plus(4, ChronoUnit.HOURS))
             .message(message)
             .build();
 
