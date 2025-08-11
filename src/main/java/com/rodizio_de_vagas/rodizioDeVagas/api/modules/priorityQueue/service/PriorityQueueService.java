@@ -57,41 +57,59 @@ public class PriorityQueueService {
     public void deactivateFiscalFromCategory(String registration, Category category) {
         List<PriorityQueueEntity> priorityQueue = this.priorityQueueRepository.findByCategoryOrderByPositionInLineWithLock(category);
 
-        PriorityQueueEntity queue = priorityQueue.stream()
+        PriorityQueueEntity taxToDeactivate = priorityQueue.stream()
             .filter(q -> q.getUserEntity().getRegistration().equals(registration))
             .findFirst()
             .orElseThrow(() -> new ResourceNotFoundException("Fiscal não encontrado na fila"));
 
-        int leavingPosition = queue.getPositionInLine();
-        this.priorityQueueRepository.delete(queue);
+        priorityQueue.remove(taxToDeactivate);
+        this.priorityQueueRepository.delete(taxToDeactivate);
 
-        for (PriorityQueueEntity q : priorityQueue) {
-            if (q.getPositionInLine() > leavingPosition) {
-                q.setPositionInLine(q.getPositionInLine() - 1);
-            }
+        // 5. Reordenar as posições dos fiscais restantes na lista em memória
+        // O loop deve reatribuir posições contíguas, sem lacunas
+        int newPosition = 1;
+        for (PriorityQueueEntity q : priorityQueue) { // priorityQueue agora não contém o fiscal deletado
+            q.setPositionInLine(newPosition++);
         }
 
+        // 6. Salvar todas as entidades restantes com as novas posições
         this.priorityQueueRepository.saveAll(priorityQueue);
         this.priorityQueueRepository.flush();
     }
 
     @Transactional
     public void activateFiscalInCategory(String registration, Category category) {
+        // 1. Obter o UserEntity (Fiscal)
+        UserEntity tax = userRepository.findByRegistration(registration)
+            .orElseThrow(() -> new ResourceNotFoundException("Fiscal não encontrado para ativar na categoria."));
+
+        // 2. Obter a fila com lock (bom para concorrência)
         List<PriorityQueueEntity> queue = this.priorityQueueRepository.findByCategoryOrderByPositionInLineWithLock(category);
 
+        // 3. VERIFICAÇÃO CRUCIAL: Verificar se o fiscal JÁ ESTÁ na fila para esta categoria
+        boolean alreadyInQueue = queue.stream()
+            .anyMatch(q -> q.getUserEntity().getId().equals(tax.getId()));
+
+        if (alreadyInQueue) {
+            System.out.println("Fiscal " + tax.getRegistration() + " já está na fila para a categoria " + category + ". Ignorando adição.");
+            return;
+        }
+
+        // 4. Calcular a próxima posição
         int maxPosition = queue.stream()
             .mapToInt(PriorityQueueEntity::getPositionInLine)
             .max()
-            .orElse(0);
+            .orElse(0); // Se a fila estiver vazia, a primeira posição será 1
 
-        PriorityQueueEntity newQueue = PriorityQueueEntity.builder()
-            .userEntity(userRepository.findByRegistration(registration)
-                .orElseThrow(() -> new ResourceNotFoundException("Fiscal não encontrado")))
+        // 5. Criar e salvar a nova entidade
+        PriorityQueueEntity newQueueEntry = PriorityQueueEntity.builder()
+            .userEntity(tax)
             .category(category)
             .positionInLine(maxPosition + 1)
             .build();
 
-        this.priorityQueueRepository.save(newQueue);
+        this.priorityQueueRepository.save(newQueueEntry);
+        this.priorityQueueRepository.flush();
     }
 
     /**

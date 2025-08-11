@@ -51,4 +51,6 @@ public interface EnrollmentRepository extends JpaRepository<EnrollmentEntity, Lo
 
     Optional<EnrollmentEntity> findByWorkEntityAndUserEntityAndSubscriptionStatusIn(WorkEntity work, UserEntity user, List<SubscriptionStatus> statuses);
 
+    List<EnrollmentEntity> findByUserEntity(UserEntity user);
+
 }

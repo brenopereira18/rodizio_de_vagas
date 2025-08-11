@@ -3,6 +3,10 @@ package com.rodizio_de_vagas.rodizioDeVagas.api.modules.user.service;
 import com.rodizio_de_vagas.rodizioDeVagas.api.exceptions.EntityAlreadyExistsException;
 import com.rodizio_de_vagas.rodizioDeVagas.api.exceptions.ResourceNotFoundException;
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.WorkCategoryPreference.service.WorkCategoryPreferenceService;
+import com.rodizio_de_vagas.rodizioDeVagas.api.modules.enrollment.entity.EnrollmentEntity;
+import com.rodizio_de_vagas.rodizioDeVagas.api.modules.enrollment.repository.EnrollmentRepository;
+import com.rodizio_de_vagas.rodizioDeVagas.api.modules.notification.entity.NotificationEntity;
+import com.rodizio_de_vagas.rodizioDeVagas.api.modules.notification.repository.NotificationRepository;
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.priorityQueue.repository.PriorityQueueRepository;
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.priorityQueue.service.PriorityQueueService;
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.user.entity.UserEntity;
@@ -27,6 +31,12 @@ public class UserService {
 
     @Autowired
     private PriorityQueueService priorityQueueService;
+
+    @Autowired
+    private EnrollmentRepository enrollmentRepository;
+
+    @Autowired
+    private NotificationRepository notificationRepository;
 
     @Autowired
     private PriorityQueueRepository priorityQueueRepository;
@@ -128,6 +138,18 @@ public class UserService {
                      this.priorityQueueService.deactivateFiscalFromCategory(registration, category);
                  }
              }
+         }
+
+         List<NotificationEntity> userNotifications = notificationRepository.findByUserEntity(user);
+         if (!userNotifications.isEmpty()) {
+             notificationRepository.deleteAll(userNotifications);
+             notificationRepository.flush();
+         }
+
+         List<EnrollmentEntity> userEnrollments = this.enrollmentRepository.findByUserEntity(user);
+         if (!userEnrollments.isEmpty()) {
+             enrollmentRepository.deleteAll(userEnrollments);
+             enrollmentRepository.flush();
          }
          this.userRepository.delete(user);
      }
