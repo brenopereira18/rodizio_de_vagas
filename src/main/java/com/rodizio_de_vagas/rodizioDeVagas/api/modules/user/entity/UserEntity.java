@@ -5,7 +5,6 @@ import com.rodizio_de_vagas.rodizioDeVagas.api.modules.WorkCategoryPreference.en
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
-import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -42,6 +41,9 @@ public class UserEntity implements UserDetails {
     @Column(name = "senha", nullable = false)
     @NotBlank
     private String password;
+
+    @Column(name = "tem_habilitação")
+    private Boolean haveALicense;
 
     @Column(name = "telefone", nullable = false, unique = true)
     @NotBlank
