@@ -61,6 +61,7 @@ public class UserService {
             .registration(userDTO.registration())
             .phoneNumber(userDTO.phoneNumber())
             .password(encryptedPassword)
+            .haveALicense(false)
             .userRole(userDTO.userRole())
             .build();
 
@@ -117,6 +118,7 @@ public class UserService {
             new ResourceNotFoundException("Fiscal não encontrado."));
 
         user.setPhoneNumber(dto.phoneNumber());
+        user.setHaveALicense(dto.haveALicense());
 
         if (dto.password() != null && !dto.password().isBlank()) {
             String encryptedPassword = new BCryptPasswordEncoder().encode(dto.password());
