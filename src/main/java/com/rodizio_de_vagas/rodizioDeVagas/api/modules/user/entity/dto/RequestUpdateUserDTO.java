@@ -10,5 +10,6 @@ public record RequestUpdateUserDTO(
     @Size(min = 6, max = 12, message = "A senha deve ter de 6 a 12 caracteres")
     String password,
     String phoneNumber,
-    List<Category> categorys
+    List<Category> categorys,
+    Boolean haveALicense
 ) {}

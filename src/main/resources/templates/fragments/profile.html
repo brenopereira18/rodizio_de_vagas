@@ -12,9 +12,7 @@
             <p class="text-sm md:text-base mb-2"><strong>Nome:</strong> <span th:text="${usuario.fullName}"></span></p>
             <p class="text-sm md:text-base mb-2"><strong>Matrícula:</strong> <span th:text="${usuario.registration}"></span></p>
             <p class="text-sm md:text-base mb-2"><strong>Telefone:</strong> <span th:text="${usuario.phoneNumber}"></span></p>
-            <p class="text-sm md:text-base mb-4"><strong>Função:</strong> <span th:text="${usuario.userRole.userRole}"></span></p>
-
-            <div class="flex flex-col lg:flex-row lg:justify-between">
+            <p class="text-sm md:text-base mb-4"><strong>Função:</strong> <span th:text="${usuario.userRole.userRole}"></span></p<div class="flex flex-col">
                 <!-- Preferências do Fiscal -->
                 <div th:if="${usuario.userRole.name() == 'FISCAL'}" class="mt-4 pb-8">
                     <h3 class="text-base md:text-lg mb-2">Preferências de Categoria</h3>

@@ -28,13 +28,13 @@
             <input
                     type="radio"
                     name="categoria"
-                    value="FEIRA"
+                    value="FEIRA_DE_SABADO"
                     class="peer hidden"
                     onchange="mostrarFila(this.value)"
             />
             <span
                     class="tracking-widest peer-checked:bg-gradient-to-r peer-checked:from-emerald-500 peer-checked:to-emerald-500 peer-checked:text-white text-gray-700 p-2 rounded-lg transition duration-150 ease-in-out"
-            >Feira</span>
+            >Feira de Sábado</span>
         </label>
 
         <label class="radio flex items-center justify-center rounded-lg p-1 cursor-pointer">
@@ -49,6 +49,19 @@
                     class="tracking-widest peer-checked:bg-gradient-to-r peer-checked:from-emerald-500 peer-checked:to-emerald-500 peer-checked:text-white text-gray-700 p-2 rounded-lg transition duration-150 ease-in-out"
             >Ambulante</span>
         </label>
+
+        <label class="radio flex items-center justify-center rounded-lg p-1 cursor-pointer">
+            <input
+                    type="radio"
+                    name="categoria"
+                    value="FEIRA_DE_DOMINGO"
+                    class="peer hidden"
+                    onchange="mostrarFila(this.value)"
+            />
+            <span
+                    class="tracking-widest peer-checked:bg-gradient-to-r peer-checked:from-emerald-500 peer-checked:to-emerald-500 peer-checked:text-white text-gray-700 p-2 rounded-lg transition duration-150 ease-in-out"
+            >Feira de Domingo</span>
+        </label>
     </div>
 
 
@@ -60,7 +73,7 @@
                  class="fila-prioridade"
                  th:classappend="${entry.key.name() == 'EVENTO'} ? '' : ' hidden'">
                 <div class="border rounded p-4 shadow">
-                    <h3 class="text-sm md:text-base font-semibold mb-4 text-center" th:text="${entry.key}">Categoria</h3>
+                    <h3 class="text-sm md:text-base font-semibold mb-4 text-center" th:text="${entry.key.category}">Categoria</h3>
                     <table class="table-auto w-full border border-slate-300">
                         <thead class="bg-slate-100 text-sm md:text-base">
                         <tr>
