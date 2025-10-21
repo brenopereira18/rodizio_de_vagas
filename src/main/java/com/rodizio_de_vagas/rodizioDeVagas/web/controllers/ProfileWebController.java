@@ -36,7 +36,8 @@ public class ProfileWebController {
             preferences.stream()
                 .filter(WorkCategoryPreferenceEntity::isActive)
                 .map(WorkCategoryPreferenceEntity::getCategory)
-                .toList()
+                .toList(),
+            user.getHaveALicense()
         );
 
         model.addAttribute("usuario", user);
