@@ -6,5 +6,6 @@ public record RequestCreateUserDTO(
     String fullName,
     String registration,
     String phoneNumber,
-    UserRole userRole
+    UserRole userRole,
+    Boolean haveALicense
 ) {}
