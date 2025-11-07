@@ -7,16 +7,24 @@
     </div>
 
     <div class="flex items-center justify-center mt-14">
-        <div class="w-full max-w-2xl mx-auto bg-slate-200 p-6 rounded-2xl shadow-lg border border-slate-300 hover:shadow-xl   duration-300 ease-in-out">
+        <div class="w-full max-w-2xl mx-auto bg-slate-200 p-6 rounded-2xl shadow-lg border border-slate-300 hover:shadow-xl duration-300 ease-in-out">
 
             <p class="text-sm md:text-base mb-2"><strong>Nome:</strong> <span th:text="${usuario.fullName}"></span></p>
             <p class="text-sm md:text-base mb-2"><strong>Matrícula:</strong> <span th:text="${usuario.registration}"></span></p>
             <p class="text-sm md:text-base mb-2"><strong>Telefone:</strong> <span th:text="${usuario.phoneNumber}"></span></p>
-            <p class="text-sm md:text-base mb-4"><strong>Função:</strong> <span th:text="${usuario.userRole.userRole}"></span></p<div class="flex flex-col">
+            <p class="text-sm md:text-base mb-2"><strong>Função:</strong> <span th:text="${usuario.userRole.userRole}"></span></p>
+
+            <p th:if="${usuario.userRole.name() == 'FISCAL'}" class="text-sm md:text-base mb-4">
+                <strong>Possui carteira de motorista?</strong>
+                <span th:text="${usuario.haveALicense ? 'Sim' : 'Não'}"
+                      th:class="${usuario.haveALicense ? 'text-green-600 font-semibold' : 'text-red-600 font-semibold'}"></span>
+            </p>
+
+            <div class="flex flex-col">
                 <!-- Preferências do Fiscal -->
                 <div th:if="${usuario.userRole.name() == 'FISCAL'}" class="mt-4 pb-8">
                     <h3 class="text-base md:text-lg mb-2">Preferências de Categoria</h3>
-                    <div class="flex gap-6">
+                    <div class="flex flex-col md:flex-row justify-between gap-2">
                         <label th:each="cat : ${categorias}" class="flex text-sm md:text-base items-center gap-1">
                             <input type="checkbox"
                                    th:checked="${#lists.contains(preferencias.?[isActive()].![category], cat)}"
@@ -40,7 +48,7 @@
 
     <!-- Modal -->
     <div id="modal-atualizar" class="fixed inset-0 flex items-center z-50 justify-center bg-black bg-opacity-50 hidden">
-        <div class="bg-white p-6 rounded shadow w-full max-w-lg mx-4">
+        <div class="bg-white p-6 rounded shadow w-full max-w-2xl mx-4">
             <h2 class="text-lg md:text-xl font-semibold mb-4">Atualizar Dados</h2>
             <form th:action="@{/home/perfil/atualizar}" method="post" th:object="${updateDto}" class="text-sm md:text-base mb-0">
                 <input type="hidden" th:value="${usuario.registration}" name="registration"/>
@@ -56,8 +64,17 @@
                 </div>
 
                 <div th:if="${usuario.userRole.name() == 'FISCAL'}" class="mb-4">
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" name="haveALicense" value="true"
+                               th:checked="${updateDto.haveALicense == true}"
+                               class="accent-emerald-500 w-4 h-4"/>
+                        <span class="font-medium text-gray-700">Possui carteira de motorista?</span>
+                    </label>
+                </div>
+
+                <div th:if="${usuario.userRole.name() == 'FISCAL'}" class="mb-4">
                     <p class="font-medium text-gray-700 pb-2">Preferências</p>
-                    <div class="flex gap-4">
+                    <div class="flex flex-col md:flex-row justify-between gap-2">
                         <label th:each="cat : ${categorias}">
                             <input type="checkbox" name="categorys" th:value="${cat}" th:checked="${#lists.contains(updateDto.categorys, cat)}" class="accent-emerald-500 w-4 h-4">
                             <span th:text="${cat.getCategory()}">Categoria</span>
