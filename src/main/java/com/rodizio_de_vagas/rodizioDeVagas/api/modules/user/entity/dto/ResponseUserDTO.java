@@ -4,5 +4,6 @@ public record ResponseUserDTO(
     Long id,
     String fullName,
     String registration,
-    String phoneNumber
+    String phoneNumber,
+    Boolean haveALicense
 ) {}

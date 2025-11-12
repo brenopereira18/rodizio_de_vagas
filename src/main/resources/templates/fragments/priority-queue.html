@@ -78,12 +78,14 @@
                         <thead class="bg-slate-100 text-sm md:text-base">
                         <tr>
                             <th class="border px-4 py-2 text-left">Nome</th>
+                            <th class="border px-4 py-2 text-left">Habilitação</th>
                             <th class="border px-4 py-2 text-left">Posição</th>
                         </tr>
                         </thead>
                         <tbody class="text-xs">
                         <tr th:each="fiscal : ${entry.value}">
                             <td class="border px-4 py-2" th:text="${fiscal.userEntity.fullName}">Nome</td>
+                            <td class="border px-4 py-2" th:text="${(fiscal.userEntity.haveALicense ?: false) ? 'Sim' : 'Não'}"></td>
                             <td class="border px-4 py-2" th:text="${fiscal.positionInLine}">Posição</td>
                         </tr>
                         </tbody>

@@ -20,7 +20,4 @@ public interface PriorityQueueRepository extends JpaRepository<PriorityQueueEnti
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT q FROM PriorityQueueEntity q WHERE q.category = :category ORDER BY q.positionInLine")
     List<PriorityQueueEntity> findByCategoryOrderByPositionInLineWithLock(@Param("category") Category category);
-
-    @Query("SELECT MAX(q.positionInLine) FROM PriorityQueueEntity q WHERE q.category = :category")
-    Optional<Integer> findMaxPositionByCategory(@Param("category") Category category);
 }

@@ -52,8 +52,6 @@ public class WorkCategoryPreferenceService {
         }
     }
 
-
-
     public void createInitialPreferencesForUser(UserEntity user) {
         if (user.getUserRole() == UserRole.SUPERVISOR || user.getUserRole() == UserRole.ADMINISTRADOR ) {
             return;

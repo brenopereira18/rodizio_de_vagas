@@ -85,7 +85,7 @@ public class UserService {
          List<UserEntity> tax = this.userRepository.findByUserRole(UserRole.FISCAL);
 
          return tax.stream().map(
-             s -> new ResponseUserDTO(s.getId(), s.getFullName(), s.getRegistration(), s.getPhoneNumber())
+             s -> new ResponseUserDTO(s.getId(), s.getFullName(), s.getRegistration(), s.getPhoneNumber(), s.getHaveALicense())
          ).toList();
      }
 
@@ -93,7 +93,7 @@ public class UserService {
          List<UserEntity> admins = this.userRepository.findByUserRole(UserRole.ADMINISTRADOR);
 
          return admins.stream().map(
-             s -> new ResponseUserDTO(s.getId(), s.getFullName(), s.getRegistration(), s.getPhoneNumber())
+             s -> new ResponseUserDTO(s.getId(), s.getFullName(), s.getRegistration(), s.getPhoneNumber(), s.getHaveALicense())
          ).toList();
      }
 
@@ -101,7 +101,7 @@ public class UserService {
         List<UserEntity> managers = this.userRepository.findByUserRole(UserRole.SUPERVISOR);
 
         return managers.stream().map(
-            s -> new ResponseUserDTO(s.getId(), s.getFullName(), s.getRegistration(), s.getPhoneNumber())
+            s -> new ResponseUserDTO(s.getId(), s.getFullName(), s.getRegistration(), s.getPhoneNumber(), s.getHaveALicense())
         ).toList();
      }
 

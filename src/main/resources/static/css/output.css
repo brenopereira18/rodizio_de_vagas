@@ -745,16 +745,8 @@ video {
   max-width: fit-content;
 }
 
-.max-w-lg {
-  max-width: 32rem;
-}
-
 .max-w-md {
   max-width: 28rem;
-}
-
-.max-w-xl {
-  max-width: 36rem;
 }
 
 .flex-1 {
@@ -800,10 +792,6 @@ video {
   flex-direction: column;
 }
 
-.items-start {
-  align-items: flex-start;
-}
-
 .items-center {
   align-items: center;
 }
@@ -830,10 +818,6 @@ video {
 
 .gap-4 {
   gap: 1rem;
-}
-
-.gap-6 {
-  gap: 1.5rem;
 }
 
 .space-x-2 > :not([hidden]) ~ :not([hidden]) {
@@ -1374,10 +1358,6 @@ body {
 
   .sm\:flex-row {
     flex-direction: row;
-  }
-
-  .sm\:flex-col {
-    flex-direction: column;
   }
 
   .sm\:justify-center {

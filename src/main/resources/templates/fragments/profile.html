@@ -14,11 +14,14 @@
             <p class="text-sm md:text-base mb-2"><strong>Telefone:</strong> <span th:text="${usuario.phoneNumber}"></span></p>
             <p class="text-sm md:text-base mb-2"><strong>Função:</strong> <span th:text="${usuario.userRole.userRole}"></span></p>
 
-            <p th:if="${usuario.userRole.name() == 'FISCAL'}" class="text-sm md:text-base mb-4">
-                <strong>Possui carteira de motorista?</strong>
-                <span th:text="${usuario.haveALicense ? 'Sim' : 'Não'}"
-                      th:class="${usuario.haveALicense ? 'text-green-600 font-semibold' : 'text-red-600 font-semibold'}"></span>
-            </p>
+            <div th:if="${usuario.userRole.name() == 'FISCAL'}" class="text-sm md:text-base mb-4">
+                <p>Possui carteira de motorista?</p>
+                <input type="hidden" name="haveALicense" value="false"/>
+                <label class="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" name="haveALicense" value="true"
+                           th:checked="${(updateDto.haveALicense ?: false) == true}"
+                           class="accent-emerald-500 w-5 h-5 rounded border border-gray-400 cursor-pointer opacity-100" disabled/>
+            </div>
 
             <div class="flex flex-col">
                 <!-- Preferências do Fiscal -->

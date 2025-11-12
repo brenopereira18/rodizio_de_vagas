@@ -64,6 +64,7 @@
                     <th class="border px-4 py-2 text-left">Nome</th>
                     <th class="border px-4 py-2 text-left">Matrícula</th>
                     <th class="border px-4 py-2 text-left">Telefone</th>
+                    <th class="border px-4 py-2 text-left">Habilitação</th>
                 </tr>
                 </thead>
                 <tbody class="text-xs">
@@ -71,6 +72,7 @@
                     <td class="border px-4 py-2" th:text="${f.fullName}"></td>
                     <td class="border px-4 py-2" th:text="${f.registration}"></td>
                     <td class="border px-4 py-2" th:text="${f.phoneNumber}"></td>
+                    <td class="border px-4 py-2" th:text="${(f.haveALicense ?: false) ? 'Sim' : 'Não'}"></td>
                 </tr>
                 </tbody>
             </table>
