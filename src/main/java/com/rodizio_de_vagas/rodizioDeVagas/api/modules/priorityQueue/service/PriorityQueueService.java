@@ -64,6 +64,7 @@ public class PriorityQueueService {
 
         priorityQueue.remove(taxToDeactivate);
         this.priorityQueueRepository.delete(taxToDeactivate);
+        this.priorityQueueRepository.flush();
 
         // 5. Reordenar as posições dos fiscais restantes na lista em memória
         // O loop deve reatribuir posições contíguas, sem lacunas
@@ -74,6 +75,7 @@ public class PriorityQueueService {
 
         // 6. Salvar todas as entidades restantes com as novas posições
         this.priorityQueueRepository.saveAll(priorityQueue);
+        this.priorityQueueRepository.flush();
     }
 
     @Transactional
@@ -124,44 +126,66 @@ public class PriorityQueueService {
             return;
         }
 
-        // Bloqueia toda a fila da categoria para escrita para evitar concorrência externa.
+        System.out.println("=== INÍCIO sendFiscalToEndOfQueue ===");
+        System.out.println("Categoria: " + category);
+        System.out.println("Fiscais a mover (IDs): " + userIdsToMoveToEndOfQueue);
+
         List<PriorityQueueEntity> currentQueue = this.priorityQueueRepository
             .findByCategoryOrderByPositionInLineWithLock(category);
+
+        System.out.println("Fila atual ANTES da operação:");
+        for (PriorityQueueEntity pq : currentQueue) {
+            System.out.println("  - Fiscal ID: " + pq.getUserEntity().getId() +
+                ", Posição: " + pq.getPositionInLine() +
+                ", Matrícula: " + pq.getUserEntity().getRegistration());
+        }
 
         if (currentQueue.isEmpty()) {
             return;
         }
 
-        // Separa os fiscais em duas listas: os que serão movidos e os que permanecerão
         List<PriorityQueueEntity> fiscalsToBeMoved = new ArrayList<>();
         List<PriorityQueueEntity> remainingFiscals = new ArrayList<>();
 
         for (PriorityQueueEntity pqEntity : currentQueue) {
             if (userIdsToMoveToEndOfQueue.contains(pqEntity.getUserEntity().getId())) {
                 fiscalsToBeMoved.add(pqEntity);
+                System.out.println("  → Fiscal a ser movido: ID " + pqEntity.getUserEntity().getId() +
+                    ", Posição atual: " + pqEntity.getPositionInLine());
             } else {
                 remainingFiscals.add(pqEntity);
             }
         }
 
-        // Reorganiza as posições dos fiscais que permanecem na parte inicial da fila
+        System.out.println("Fiscais que ficam: " + remainingFiscals.size());
+        System.out.println("Fiscais a mover: " + fiscalsToBeMoved.size());
+
         int currentPosition = 1;
         for (PriorityQueueEntity fiscal : remainingFiscals) {
+            System.out.println("  → Fiscal ID " + fiscal.getUserEntity().getId() +
+                ": " + fiscal.getPositionInLine() + " → " + currentPosition);
             fiscal.setPositionInLine(currentPosition++);
         }
 
-        // Atribui as novas posições aos fiscais que foram movidos para o final
-        // E os adiciona à lista 'remainingFiscals' para serem salvos junto
         for (PriorityQueueEntity fiscal : fiscalsToBeMoved) {
+            System.out.println("  → Fiscal movido ID " + fiscal.getUserEntity().getId() +
+                ": " + fiscal.getPositionInLine() + " → " + currentPosition);
             fiscal.setPositionInLine(currentPosition++);
-            remainingFiscals.add(fiscal);
+            remainingFiscals.add(fiscal); // ← AQUI ESTÁ O PROBLEMA!
         }
 
-        // Salva todas as entidades da fila de uma vez.
-        // Com a constraint DEFERRABLE, o banco de dados só verificará a unicidade
-        // (categoria, posicao_na_fila) no COMMIT da transação.
-        this.priorityQueueRepository.saveAll(remainingFiscals);
-        this.priorityQueueRepository.flush();
+        System.out.println("Tentando salvar " + remainingFiscals.size() + " fiscais...");
+
+        try {
+            this.priorityQueueRepository.saveAll(remainingFiscals);
+            this.priorityQueueRepository.flush();
+            System.out.println("✅ Salvou com sucesso!");
+        } catch (Exception e) {
+            System.err.println("❌ ERRO ao salvar: " + e.getMessage());
+            throw e;
+        }
+
+        System.out.println("=== FIM sendFiscalToEndOfQueue ===");
     }
 
     /**
