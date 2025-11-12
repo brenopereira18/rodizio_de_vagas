@@ -21,6 +21,7 @@ import reactor.core.publisher.Flux;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -48,10 +49,7 @@ public class NotificationService {
 
         List<PriorityQueueEntity> queue = this.priorityQueueRepository.findByCategoryOrderByPositionInLine(category);
 
-        // Seleciona os primeiros fiscais da fila
-        List<PriorityQueueEntity> selectedTax = queue.stream()
-            .limit(numberOfVacancies)
-            .toList();
+        List<PriorityQueueEntity> selectedTax = selectFiscalsWithLicensePriority(queue, numberOfVacancies);
 
         Flux.fromIterable(selectedTax)
             .delayElements(Duration.ofSeconds(8))
@@ -74,9 +72,8 @@ public class NotificationService {
         List<Long> enrolledUserIds = enrollmentRepository.findUserIdsByWorkId(work.getId());
 
         // Filtre os fiscais elegíveis (ainda não notificados/inscritos)
-        List<UserEntity> eligibleFiscals = queue.stream()
+        List<PriorityQueueEntity> eligibleFiscals = queue.stream()
             .filter(q -> !notifiedUserIds.contains(q.getUserEntity().getId()) && !enrolledUserIds.contains(q.getUserEntity().getId()))
-            .map(PriorityQueueEntity::getUserEntity)
             .collect(Collectors.toList());
 
         if (eligibleFiscals.isEmpty()) {
@@ -86,14 +83,11 @@ public class NotificationService {
             return;
         }
 
-        // Selecione quantos fiscais notificar (o mínimo entre vagas restantes e fiscais elegíveis)
-        List<UserEntity> fiscalsToNotify = eligibleFiscals.stream()
-            .limit(remainingVacancies)
-            .toList();
+        List<PriorityQueueEntity> fiscalsToNotify = selectFiscalsWithLicensePriority(eligibleFiscals, remainingVacancies);
 
         Flux.fromIterable(fiscalsToNotify)
             .delayElements(Duration.ofSeconds(8))
-            .doOnNext(fiscal -> notifyTax(fiscal, work))
+            .doOnNext(queueEntity -> notifyTax(queueEntity.getUserEntity(), work))
             .doOnComplete(() -> System.out.println("Notificações em lote concluídas para o serviço " + work.getTitle()))
             .subscribe();
     }
@@ -126,6 +120,53 @@ public class NotificationService {
             .build();
 
         this.enrollmentRepository.save(enrollment);
-        whatsappNotificationService.sendMessage(tax.getPhoneNumber(), notification.getMessage());
+        // whatsappNotificationService.sendMessage(tax.getPhoneNumber(), notification.getMessage());
+    }
+
+    /**
+     * Seleciona fiscais aplicando a regra de prioridade para habilitados.
+     * Se houver fiscais com habilitação na fila, o primeiro com habilitação sempre pega a primeira vaga.
+     * As demais vagas seguem a ordem normal da fila.
+     */
+    private List<PriorityQueueEntity> selectFiscalsWithLicensePriority(List<PriorityQueueEntity> availableQueue, int numberOfVacancies) {
+        if (availableQueue.isEmpty() || numberOfVacancies <= 0) {
+            return List.of();
+        }
+
+        // Separar fiscais com e sem habilitação
+        List<PriorityQueueEntity> fiscalsWithLicense = availableQueue.stream()
+            .filter(q -> Boolean.TRUE.equals(q.getUserEntity().getHaveALicense()))
+            .collect(Collectors.toList());
+
+        List<PriorityQueueEntity> fiscalsWithoutLicense = availableQueue.stream()
+            .filter(q -> !Boolean.TRUE.equals(q.getUserEntity().getHaveALicense()))
+            .collect(Collectors.toList());
+
+        // Se não há fiscais com habilitação, segue ordem normal
+        if (fiscalsWithLicense.isEmpty()) {
+            return availableQueue.stream()
+                .limit(numberOfVacancies)
+                .collect(Collectors.toList());
+        }
+        List<PriorityQueueEntity> selectedFiscals = new ArrayList<>();
+        // SEMPRE garantir pelo menos 1 habilitado na primeira posição
+        selectedFiscals.add(fiscalsWithLicense.get(0));
+
+        // Para as vagas restantes, intercalar seguindo a ordem original da fila
+        int remainingVacancies = numberOfVacancies - 1;
+        if (remainingVacancies > 0) {
+            availableQueue.stream()
+                .filter(q -> !q.equals(fiscalsWithLicense.get(0)))
+                .limit(remainingVacancies)
+                .forEach(selectedFiscals::add);
+        }
+
+        System.out.println("Fila disponível: " + availableQueue.size() + " fiscais");
+        System.out.println("Fiscais com habilitação: " + fiscalsWithLicense.size());
+        System.out.println("Selecionados: " + selectedFiscals.stream()
+            .map(q -> q.getUserEntity().getFullName() + " (Habilitação: " + q.getUserEntity().getHaveALicense() + ")")
+            .collect(Collectors.joining(", ")));
+
+        return selectedFiscals;
     }
 }
