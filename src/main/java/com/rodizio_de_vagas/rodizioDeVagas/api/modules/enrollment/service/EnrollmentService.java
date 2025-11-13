@@ -8,6 +8,7 @@ import com.rodizio_de_vagas.rodizioDeVagas.api.modules.enrollment.entity.dto.Res
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.enrollment.repository.EnrollmentRepository;
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.notification.service.NotificationService;
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.priorityQueue.service.PriorityQueueService;
+import com.rodizio_de_vagas.rodizioDeVagas.api.modules.redis.service.RedisEventService;
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.user.entity.UserEntity;
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.user.repository.UserRepository;
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.work.entity.Category;
@@ -45,6 +46,9 @@ public class EnrollmentService {
     @Autowired
     private PriorityQueueService priorityQueueService;
 
+    @Autowired
+    private RedisEventService redisEventService;
+
     /**
      * Atualiza a resposta do fiscal (aceitar ou recusar) e o move para o final da fila.
      *
@@ -73,8 +77,6 @@ public class EnrollmentService {
         } else {
             handleEnrollmentRejection(enrollment);
         }
-
-        priorityQueueService.sendFiscalToEndOfQueue(enrollment.getUserEntity(), enrollment.getWorkEntity().getCategory());
         finalizeWorkStatus(enrollment.getWorkEntity());
     }
 
@@ -141,6 +143,9 @@ public class EnrollmentService {
         this.enrollmentRepository.save(enrollment);
 
         WorkEntity work = enrollment.getWorkEntity();
+        
+        this.redisEventService.publishTaxRefusal(enrollment.getUserEntity().getId(), enrollment.getUserEntity().getRegistration(), work.getCategory(), work.getId());
+
         int totalAccepted = this.enrollmentRepository.countByWorkEntityAndSubscriptionStatus(work, SubscriptionStatus.ACCEPTED);
 
         if (totalAccepted >= work.getNumberOfVacancies()) {
@@ -191,32 +196,22 @@ public class EnrollmentService {
             Category category = entry.getKey();
             List<EnrollmentEntity> enrollmentsInThisCategory = entry.getValue();
 
-            // Usa a sincronização por categoria para evitar que threads diferentes manipulem a mesma fila
-            synchronized (category.toString().intern()) {
-                // 1. Coleta os IDs dos fiscais cujas inscrições expiraram nesta categoria
-                Set<Long> userIdsToMoveToEndOfQueue = enrollmentsInThisCategory.stream()
-                    .map(e -> e.getUserEntity().getId())
-                    .collect(Collectors.toSet());
+            for (EnrollmentEntity enrollment : enrollmentsInThisCategory) {
+                // 1. Atualizar status para EXPIRED
+                enrollment.setSubscriptionStatus(SubscriptionStatus.EXPIRED);
+                this.enrollmentRepository.save(enrollment);
 
-                // 2. Chama o método para enviar os fiscais para o final da fila de uma vez
-                // Este método cuidará da reorganização da fila de forma atômica para a categoria
-                this.priorityQueueService.sendFiscalToEndOfQueue(userIdsToMoveToEndOfQueue, category);
+                // 2. Publicar evento Redis para reorganização assíncrona
+                redisEventService.publishTaxRefusal(
+                    enrollment.getUserEntity().getId(),
+                    enrollment.getUserEntity().getRegistration(),
+                    enrollment.getWorkEntity().getCategory(),
+                    enrollment.getWorkEntity().getId()
+                );
+            }
 
-                // 3. Atualiza o status das inscrições
-                for (EnrollmentEntity enrollment : enrollmentsInThisCategory) {
-                    enrollment.setSubscriptionStatus(SubscriptionStatus.EXPIRED);
-                    this.enrollmentRepository.save(enrollment);
-                }
-
-                // 4. Notifica o próximo fiscal (assumindo que a notificação é para a próxima vaga disponível na categoria)
-                // É crucial que a fila já esteja atualizada no banco de dados neste ponto para que a notificação
-                // pegue o fiscal correto.
-                if (!enrollmentsInThisCategory.isEmpty()) {
-                    // Pode ser necessário ajustar como você determina qual 'WorkEntity' usar aqui,
-                    // caso haja múltiplas vagas para a mesma categoria expirando ao mesmo tempo.
-                    // Para simplificar, estamos pegando a primeira vaga da lista.
-                    notificationService.notifyNextTax(enrollmentsInThisCategory.get(0).getWorkEntity(), category);
-                }
+            if (!enrollmentsInThisCategory.isEmpty()) {
+                notificationService.notifyNextTax(enrollmentsInThisCategory.get(0).getWorkEntity(), category);
             }
         }
     }
