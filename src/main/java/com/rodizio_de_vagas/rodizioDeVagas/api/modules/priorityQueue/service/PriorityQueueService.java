@@ -130,58 +130,28 @@ public class PriorityQueueService {
         System.out.println("Categoria: " + category);
         System.out.println("Fiscais a mover (IDs): " + userIdsToMoveToEndOfQueue);
 
-        List<PriorityQueueEntity> currentQueue = this.priorityQueueRepository
-            .findByCategoryOrderByPositionInLineWithLock(category);
-
-        System.out.println("Fila atual ANTES da operação:");
-        for (PriorityQueueEntity pq : currentQueue) {
-            System.out.println("  - Fiscal ID: " + pq.getUserEntity().getId() +
-                ", Posição: " + pq.getPositionInLine() +
-                ", Matrícula: " + pq.getUserEntity().getRegistration());
-        }
-
-        if (currentQueue.isEmpty()) {
-            return;
-        }
-
-        List<PriorityQueueEntity> fiscalsToBeMoved = new ArrayList<>();
-        List<PriorityQueueEntity> remainingFiscals = new ArrayList<>();
-
-        for (PriorityQueueEntity pqEntity : currentQueue) {
-            if (userIdsToMoveToEndOfQueue.contains(pqEntity.getUserEntity().getId())) {
-                fiscalsToBeMoved.add(pqEntity);
-                System.out.println("  → Fiscal a ser movido: ID " + pqEntity.getUserEntity().getId() +
-                    ", Posição atual: " + pqEntity.getPositionInLine());
-            } else {
-                remainingFiscals.add(pqEntity);
-            }
-        }
-
-        System.out.println("Fiscais que ficam: " + remainingFiscals.size());
-        System.out.println("Fiscais a mover: " + fiscalsToBeMoved.size());
-
-        int currentPosition = 1;
-        for (PriorityQueueEntity fiscal : remainingFiscals) {
-            System.out.println("  → Fiscal ID " + fiscal.getUserEntity().getId() +
-                ": " + fiscal.getPositionInLine() + " → " + currentPosition);
-            fiscal.setPositionInLine(currentPosition++);
-        }
-
-        for (PriorityQueueEntity fiscal : fiscalsToBeMoved) {
-            System.out.println("  → Fiscal movido ID " + fiscal.getUserEntity().getId() +
-                ": " + fiscal.getPositionInLine() + " → " + currentPosition);
-            fiscal.setPositionInLine(currentPosition++);
-            remainingFiscals.add(fiscal); // ← AQUI ESTÁ O PROBLEMA!
-        }
-
-        System.out.println("Tentando salvar " + remainingFiscals.size() + " fiscais...");
-
         try {
-            this.priorityQueueRepository.saveAll(remainingFiscals);
-            this.priorityQueueRepository.flush();
-            System.out.println("✅ Salvou com sucesso!");
+            // Executar reorganização com CTE
+            this.priorityQueueRepository.reorderQueueWithCTE(
+                userIdsToMoveToEndOfQueue,
+                category.name()
+            );
+
+            System.out.println("✅ Fila reorganizada com sucesso!");
+
+            // Log da fila após reorganização (opcional para debug)
+            List<PriorityQueueEntity> updatedQueue = this.priorityQueueRepository
+                .findByCategoryOrderByPositionInLine(category);
+
+            System.out.println("Fila APÓS a operação:");
+            for (PriorityQueueEntity pq : updatedQueue) {
+                System.out.println("  - Fiscal ID: " + pq.getUserEntity().getId() +
+                    ", Posição: " + pq.getPositionInLine() +
+                    ", Matrícula: " + pq.getUserEntity().getRegistration());
+            }
+
         } catch (Exception e) {
-            System.err.println("❌ ERRO ao salvar: " + e.getMessage());
+            System.err.println("❌ ERRO ao reorganizar fila: " + e.getMessage());
             throw e;
         }
 
@@ -201,6 +171,21 @@ public class PriorityQueueService {
         userIds.add(user.getId());
         // Chama o método que lida com a reorganização da fila de forma robusta
         this.sendFiscalToEndOfQueue(userIds, category);
+    }
+
+    /**
+     * Verifica se um fiscal está na fila de uma categoria
+     */
+    public boolean isFiscalInQueue(Long fiscalId, Category category) {
+        try {
+            return priorityQueueRepository
+                .existsByUserEntityIdAndCategory(fiscalId, category);
+
+        } catch (Exception e) {
+            System.err.println("Erro ao verificar fiscal na fila: fiscalId=" + fiscalId +
+                ", categoria=" + category + ", erro=" + e.getMessage());
+            return false;
+        }
     }
 
     public Map<Category, List<PriorityQueueEntity>> getAllQueuesGroupedByCategory() {
