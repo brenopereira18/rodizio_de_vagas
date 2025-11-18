@@ -6,6 +6,7 @@ import com.rodizio_de_vagas.rodizioDeVagas.api.modules.WorkCategoryPreference.re
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.priorityQueue.service.PriorityQueueService;
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.user.entity.UserEntity;
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.user.entity.UserRole;
+import com.rodizio_de_vagas.rodizioDeVagas.api.modules.user.repository.UserRepository;
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.work.entity.Category;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -20,6 +21,9 @@ public class WorkCategoryPreferenceService {
 
     @Autowired
     private PriorityQueueService priorityQueueService;
+
+    @Autowired
+    private UserRepository userRepository;
 
     public List<WorkCategoryPreferenceEntity> getPreferencesByUser(String registration) {
         return this.workCategoryPreferenceRepository.findByUserEntityRegistration(registration);
@@ -46,10 +50,24 @@ public class WorkCategoryPreferenceService {
     public void syncPreferences(String registration, List<Category> activeCategories) {
         List<WorkCategoryPreferenceEntity> currentPreferences = workCategoryPreferenceRepository.findByUserEntityRegistration(registration);
 
-        for (WorkCategoryPreferenceEntity preference : currentPreferences) {
+        UserEntity user = userRepository.findByRegistration(registration)
+            .orElseThrow(() -> new ResourceNotFoundException("Fiscal não encontrado"));
+
+        List<Category> categoriesToDeactivate = currentPreferences.stream()
+            .filter(pref -> pref.isActive() && !activeCategories.contains(pref.getCategory()))
+            .map(WorkCategoryPreferenceEntity::getCategory)
+            .toList();
+
+        categoriesToDeactivate.forEach(category ->
+            this.priorityQueueService.validateFiscalCanLeaveQueue(user.getId(), category)
+        );
+
+        currentPreferences.forEach(preference -> {
             boolean shouldBeActive = activeCategories.contains(preference.getCategory());
-            updatePreference(registration, preference.getCategory(), shouldBeActive);
-        }
+            if (preference.isActive() != shouldBeActive) {
+                updatePreference(registration, preference.getCategory(), shouldBeActive);
+            }
+        });
     }
 
     public void createInitialPreferencesForUser(UserEntity user) {
