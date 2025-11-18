@@ -4,6 +4,7 @@ import com.rodizio_de_vagas.rodizioDeVagas.api.modules.enrollment.entity.dto.Res
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.enrollment.service.EnrollmentService;
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.work.service.WorkService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -12,6 +13,7 @@ import java.util.List;
 
 @Controller
 @RequestMapping("/home/inscricoes")
+@PreAuthorize("hasAuthority('ADMINISTRADOR') or hasAuthority('SUPERVISOR')")
 public class RegistrationWebController {
 
     @Autowired

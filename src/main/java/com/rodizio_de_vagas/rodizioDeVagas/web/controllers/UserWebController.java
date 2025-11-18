@@ -9,6 +9,7 @@ import com.rodizio_de_vagas.rodizioDeVagas.api.modules.user.entity.dto.RequestCr
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.user.service.UserService;
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.work.entity.Category;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -18,6 +19,7 @@ import java.util.List;
 import java.util.Map;
 
 @Controller
+@PreAuthorize("hasAuthority('ADMINISTRADOR')")
 @RequestMapping("/home/fiscais")
 public class UserWebController {
 

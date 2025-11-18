@@ -10,6 +10,7 @@ import com.rodizio_de_vagas.rodizioDeVagas.api.modules.work.entity.dto.RequestCr
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.work.entity.dto.WorkWithEnrollment;
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.work.service.WorkService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -52,6 +53,7 @@ public class WorkWebController {
         return "fragments/services";
     }
 
+    @PreAuthorize("hasAuthority('ADMINISTRADOR')")
     @PostMapping
     public String createService(@ModelAttribute RequestCreateOrUpdateWorkDTO dto, RedirectAttributes redirectAttributes) {
         try {
@@ -63,6 +65,7 @@ public class WorkWebController {
         return "redirect:/home/servicos/disponiveis";
     }
 
+    @PreAuthorize("hasAuthority('ADMINISTRADOR')")
     @PostMapping("/atualizar")
     public String updateService(@ModelAttribute RequestCreateOrUpdateWorkDTO dto, RedirectAttributes redirectAttributes) {
         try {
@@ -74,6 +77,7 @@ public class WorkWebController {
         return "redirect:/home/servicos/disponiveis";
     }
 
+    @PreAuthorize("hasAuthority('ADMINISTRADOR')")
     @PostMapping("/deletar")
     public String deleteWork(@RequestParam Long id, RedirectAttributes redirectAttrs) {
         try {
