@@ -53,4 +53,18 @@ public interface EnrollmentRepository extends JpaRepository<EnrollmentEntity, Lo
 
     List<EnrollmentEntity> findByUserEntity(UserEntity user);
 
+    @Query("""
+    SELECT e FROM EnrollmentEntity e 
+    WHERE e.userEntity.id = :userId 
+    AND e.subscriptionStatus = :status 
+    AND e.workEntity.category = :category 
+    AND e.workEntity.serviceEndDate > :currentDate
+    """)
+    List<EnrollmentEntity> findByUserEntityIdAndSubscriptionStatusAndWorkCategoryAndDateAfter(
+        Long userId,
+        SubscriptionStatus status,
+        Category category,
+        LocalDateTime currentDate
+    );
+
 }
