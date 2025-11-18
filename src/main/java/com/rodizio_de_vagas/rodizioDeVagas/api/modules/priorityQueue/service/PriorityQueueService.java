@@ -1,6 +1,9 @@
 package com.rodizio_de_vagas.rodizioDeVagas.api.modules.priorityQueue.service;
 
 import com.rodizio_de_vagas.rodizioDeVagas.api.exceptions.ResourceNotFoundException;
+import com.rodizio_de_vagas.rodizioDeVagas.api.modules.enrollment.entity.EnrollmentEntity;
+import com.rodizio_de_vagas.rodizioDeVagas.api.modules.enrollment.entity.SubscriptionStatus;
+import com.rodizio_de_vagas.rodizioDeVagas.api.modules.enrollment.repository.EnrollmentRepository;
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.priorityQueue.entity.PriorityQueueEntity;
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.priorityQueue.repository.PriorityQueueRepository;
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.user.entity.UserEntity;
@@ -12,6 +15,8 @@ import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -23,6 +28,9 @@ public class PriorityQueueService {
 
     @Autowired
     private UserRepository userRepository;
+    
+    @Autowired
+    private EnrollmentRepository enrollmentRepository;
 
     /**
      * Cria automaticamente as filas de prioridade para todas as categorias
@@ -55,6 +63,11 @@ public class PriorityQueueService {
 
     @Transactional
     public void deactivateFiscalFromCategory(String registration, Category category) {
+        UserEntity fiscal = userRepository.findByRegistration(registration)
+            .orElseThrow(() -> new ResourceNotFoundException("Fiscal não encontrado"));
+
+        validateFiscalCanLeaveQueue(fiscal.getId(), category);
+
         List<PriorityQueueEntity> priorityQueue = this.priorityQueueRepository.findByCategoryOrderByPositionInLineWithLock(category);
 
         PriorityQueueEntity taxToDeactivate = priorityQueue.stream()
@@ -76,6 +89,47 @@ public class PriorityQueueService {
         // 6. Salvar todas as entidades restantes com as novas posições
         this.priorityQueueRepository.saveAll(priorityQueue);
         this.priorityQueueRepository.flush();
+    }
+
+    /**
+     * Valida se o fiscal pode sair da fila verificando inscrições ativas
+     */
+    public void validateFiscalCanLeaveQueue(Long fiscalId, Category category) {
+        LocalDateTime now = LocalDateTime.now();
+
+        // Buscar inscrições WAITING em serviços FUTUROS
+        List<EnrollmentEntity> waitingEnrollments = enrollmentRepository
+            .findByUserEntityIdAndSubscriptionStatusAndWorkCategoryAndDateAfter(
+                fiscalId, SubscriptionStatus.WAITING, category, now);
+
+        // Buscar inscrições ACCEPTED em serviços FUTUROS
+        List<EnrollmentEntity> acceptedEnrollments = enrollmentRepository
+            .findByUserEntityIdAndSubscriptionStatusAndWorkCategoryAndDateAfter(
+                fiscalId, SubscriptionStatus.ACCEPTED, category, now);
+
+        if (!waitingEnrollments.isEmpty()) {
+            String workTitles = waitingEnrollments.stream()
+                .map(e -> e.getWorkEntity().getTitle() + " (" +
+                    e.getWorkEntity().getServiceEndDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")) + ")")
+                .collect(Collectors.joining(", "));
+
+            throw new IllegalStateException(
+                "Não é possível sair da fila. Você possui serviços futuros aguardando resposta: " + workTitles +
+                    ". Recuse os serviços antes de sair da fila."
+            );
+        }
+
+        if (!acceptedEnrollments.isEmpty()) {
+            String workTitles = acceptedEnrollments.stream()
+                .map(e -> e.getWorkEntity().getTitle() + " (" +
+                    e.getWorkEntity().getServiceEndDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")) + ")")
+                .collect(Collectors.joining(", "));
+
+            throw new IllegalStateException(
+                "Não é possível sair da fila. Você possui serviços futuros aceitos: " + workTitles +
+                    ". Cancele as inscrições antes de sair da fila."
+            );
+        }
     }
 
     @Transactional
