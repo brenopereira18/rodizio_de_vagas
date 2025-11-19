@@ -97,6 +97,10 @@ public class WorkService {
             .toList();
     }
 
+    public int countFreeWorksForUser(String registration) {
+        return getFreeWorks(registration).size();
+    }
+
     public List<WorkWithEnrollment> getEnrolledWorksForTax(String registration) {
         List<EnrollmentEntity> acceptedEnrollments = this.enrollmentRepository
             .findByUserEntityRegistrationAndSubscriptionStatus(registration, SubscriptionStatus.ACCEPTED);
