@@ -36,6 +36,6 @@ public class GlobalExceptionHandler {
 
         model.addAttribute("error", "Ocorreu um erro inesperado. Tente novamente mais tarde.");
         model.addAttribute("tokenPresent", false);
-        return "forgot-password";
+        return "redirect:/services";
     }
 }
