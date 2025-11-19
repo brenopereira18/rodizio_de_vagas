@@ -29,6 +29,29 @@
         </select>
     </form>
 
+    <div th:if="${usuario.userRole.name() == 'FISCAL' && filtro == 'DISPONIVEIS' && freeServicesCount > 0}"
+         class="mb-4 p-2 bg-blue-50 border-l-4 border-blue-400 rounded">
+        <div class="flex items-center">
+            <div class="flex-shrink-0">
+                <img src="/images/atention.png" class="w-5 h-5">
+            </div>
+            <div class="ml-2 mr-2">
+                <p class="text-sm text-blue-700">
+                    <span th:text="${freeServicesCount == 1 ? 'Há 1 serviço aberto' : 'Há ' + freeServicesCount + ' serviços abertos'}"></span>
+                    disponível para inscrição direta.
+                    <a href="?filter=FREE" class="font-medium underline hover:text-blue-800 ml-1">Ver serviços abertos
+                    </a>
+                </p>
+            </div>
+            <div class="ml-auto flex items-center">
+                <button onclick="this.parentElement.parentElement.parentElement.style.display='none'"
+                        class="w-4 h-4 text-blue-400 hover:text-blue-600">
+                    <img src="/images/close.svg" class="w-4 h-4">
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Lista de serviços -->
     <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-4">
         <div th:each="servico : ${servicos}"
