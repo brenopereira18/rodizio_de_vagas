@@ -1,15 +1,14 @@
 package com.rodizio_de_vagas.rodizioDeVagas.api.modules.enrollment.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.user.entity.UserEntity;
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.work.entity.WorkEntity;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 @Entity
-@Data
+@Getter
+@Setter
 @Builder
 @Table(name = "inscricao")
 @AllArgsConstructor
@@ -20,12 +19,14 @@ public class EnrollmentEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "servico_id", nullable = false)
+    @JsonIgnore
     private WorkEntity workEntity;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "fiscal_id", nullable = false)
+    @JsonIgnore
     private UserEntity userEntity;
 
     @Enumerated(EnumType.STRING)

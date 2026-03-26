@@ -1,18 +1,17 @@
 package com.rodizio_de_vagas.rodizioDeVagas.api.modules.WorkCategoryPreference.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.user.entity.UserEntity;
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.work.entity.Category;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 @Entity
 @Table(name = "preferencia_de_trabalho")
 @Builder
-@Data
+@Getter
+@Setter
 @AllArgsConstructor
 @NoArgsConstructor
 public class WorkCategoryPreferenceEntity {
@@ -24,6 +23,7 @@ public class WorkCategoryPreferenceEntity {
     @ManyToOne
     @JoinColumn(name = "fiscal_id", nullable = false)
     @NotNull
+    @JsonIgnore
     private UserEntity userEntity;
 
     @Enumerated(EnumType.STRING)
@@ -31,5 +31,6 @@ public class WorkCategoryPreferenceEntity {
     private Category category;
 
     @Column(name = "esta_ativo", nullable = false)
-    private boolean isActive = true;
+    @Builder.Default
+    private Boolean active = true;
 }

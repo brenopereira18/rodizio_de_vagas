@@ -2,14 +2,15 @@ package com.rodizio_de_vagas.rodizioDeVagas.web.controllers;
 
 import com.rodizio_de_vagas.rodizioDeVagas.api.exceptions.ResourceNotFoundException;
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.enrollment.entity.SubscriptionStatus;
-import com.rodizio_de_vagas.rodizioDeVagas.api.modules.user.entity.UserEntity;
+import com.rodizio_de_vagas.rodizioDeVagas.api.modules.user.entity.dto.ResponseUserDTO;
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.user.service.UserService;
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.work.entity.Category;
+import com.rodizio_de_vagas.rodizioDeVagas.api.modules.work.entity.WorkFilterType;
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.work.entity.WorkStatus;
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.work.entity.dto.RequestCreateOrUpdateWorkDTO;
-import com.rodizio_de_vagas.rodizioDeVagas.api.modules.work.entity.dto.WorkWithEnrollment;
+import com.rodizio_de_vagas.rodizioDeVagas.api.modules.work.entity.dto.WorkWithEnrollmentDTO;
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.work.service.WorkService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -20,26 +21,23 @@ import java.security.Principal;
 import java.util.List;
 
 @Controller
-@RequestMapping("/home/servicos")
+@RequestMapping("/gerenciador_de_servico/servicos")
+@RequiredArgsConstructor
 public class WorkWebController {
 
-    @Autowired
-    private UserService userService;
-
-    @Autowired
-    private WorkService workService;
+    private final UserService userService;
+    private final WorkService workService;
 
     @GetMapping
     public String redirectToDisponiveis() {
-        return "redirect:/home/servicos/disponiveis";
+        return "redirect:/gerenciador_de_servico/servicos/disponiveis";
     }
 
-
     @GetMapping("/disponiveis")
-    public String showAvailableServices(@RequestParam(defaultValue = "DISPONIVEIS") String filter, Model model, Principal principal) {
-        UserEntity user = userService.getUser(principal.getName());
+    public String showAvailableServices(@RequestParam(defaultValue = "DISPONIVEIS") WorkFilterType filter, Model model, Principal principal) {
+        ResponseUserDTO user = userService.getUser(principal.getName());
 
-        List<WorkWithEnrollment> services = workService.getWorksByFilter(user.getRegistration(), filter);
+        List<WorkWithEnrollmentDTO> services = workService.getWorksByFilter(user.registration(), filter);
 
         model.addAttribute("filtro", filter);
         model.addAttribute("pageTitle", "Serviços");
@@ -48,12 +46,12 @@ public class WorkWebController {
         model.addAttribute("servicos", services);
         model.addAttribute("WAITING", SubscriptionStatus.WAITING);
         model.addAttribute("FREE", WorkStatus.FREE);
-        model.addAttribute("freeServicesCount", workService.countFreeWorksForUser(user.getRegistration()));
+        model.addAttribute("freeServicesCount", workService.countFreeWorksForUser(user.registration()));
         model.addAttribute("usuario", user);
         return "fragments/services";
     }
 
-    @PreAuthorize("hasAuthority('ADMINISTRADOR')")
+    @PreAuthorize("hasAuthority('ROLE_ADMINISTRADOR')")
     @PostMapping
     public String createService(@ModelAttribute RequestCreateOrUpdateWorkDTO dto, RedirectAttributes redirectAttributes) {
         try {
@@ -62,10 +60,10 @@ public class WorkWebController {
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", "Erro ao criar serviço: " + e.getMessage());
         }
-        return "redirect:/home/servicos/disponiveis";
+        return "redirect:/gerenciador_de_servico/servicos/disponiveis";
     }
 
-    @PreAuthorize("hasAuthority('ADMINISTRADOR')")
+    @PreAuthorize("hasAuthority('ROLE_ADMINISTRADOR')")
     @PostMapping("/atualizar")
     public String updateService(@ModelAttribute RequestCreateOrUpdateWorkDTO dto, RedirectAttributes redirectAttributes) {
         try {
@@ -74,10 +72,10 @@ public class WorkWebController {
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", "Erro ao atualizar serviço: " + e.getMessage());
         }
-        return "redirect:/home/servicos/disponiveis";
+        return "redirect:/gerenciador_de_servico/servicos/disponiveis";
     }
 
-    @PreAuthorize("hasAuthority('ADMINISTRADOR')")
+    @PreAuthorize("hasAuthority('ROLE_ADMINISTRADOR')")
     @PostMapping("/deletar")
     public String deleteWork(@RequestParam Long id, RedirectAttributes redirectAttrs) {
         try {
@@ -86,7 +84,7 @@ public class WorkWebController {
         } catch (ResourceNotFoundException e) {
             redirectAttrs.addFlashAttribute("error", e.getMessage());
         }
-        return "redirect:/home/servicos/disponiveis";
+        return "redirect:/gerenciador_de_servico/servicos/disponiveis";
     }
 
 }

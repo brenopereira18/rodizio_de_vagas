@@ -41,7 +41,7 @@
 
         <!-- Formulário para enviar a observação -->
         <form th:id="'form-observacao-' + ${servico.id}"
-              th:action="@{/home/inscricoes/servicos/{id}/observacao(id=${servico.id})}"
+              th:action="@{/gerenciador_de_servico/inscricoes/servicos/{id}/observacao(id=${servico.id})}"
               method="post"
               class="hidden mt-2">
         <textarea name="observation"

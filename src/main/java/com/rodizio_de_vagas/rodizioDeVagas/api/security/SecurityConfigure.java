@@ -36,7 +36,7 @@ public class SecurityConfigure {
                 .loginProcessingUrl("/fiscal/login")
                 .usernameParameter("matricula")
                 .passwordParameter("senha")
-                .defaultSuccessUrl("/home/servicos", true)
+                .defaultSuccessUrl("/gerenciador_de_servico/servicos", true)
                 .failureUrl("/fiscal/login?error=true")
                 .permitAll()
             )

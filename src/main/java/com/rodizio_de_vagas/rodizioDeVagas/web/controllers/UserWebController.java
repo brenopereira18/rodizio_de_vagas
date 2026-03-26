@@ -3,11 +3,13 @@ package com.rodizio_de_vagas.rodizioDeVagas.web.controllers;
 import com.rodizio_de_vagas.rodizioDeVagas.api.exceptions.EntityAlreadyExistsException;
 import com.rodizio_de_vagas.rodizioDeVagas.api.exceptions.ResourceNotFoundException;
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.priorityQueue.entity.PriorityQueueEntity;
+import com.rodizio_de_vagas.rodizioDeVagas.api.modules.priorityQueue.entity.dto.PriorityQueueResponseDTO;
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.priorityQueue.service.PriorityQueueService;
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.user.entity.UserRole;
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.user.entity.dto.RequestCreateUserDTO;
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.user.service.UserService;
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.work.entity.Category;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
@@ -20,14 +22,12 @@ import java.util.Map;
 
 @Controller
 @PreAuthorize("hasAuthority('ADMINISTRADOR')")
-@RequestMapping("/home/fiscais")
+@RequestMapping("/gerenciador_de_servico/fiscais")
+@RequiredArgsConstructor
 public class UserWebController {
 
-    @Autowired
-    private UserService userService;
-
-    @Autowired
-    private PriorityQueueService priorityQueueService;
+    private final UserService userService;
+    private final PriorityQueueService priorityQueueService;
 
     @GetMapping
     public String showUsers(Model model) {
@@ -36,7 +36,7 @@ public class UserWebController {
         model.addAttribute("fiscais", userService.getAllTax());
         model.addAttribute("supervisores", userService.getAllManagers());
 
-        Map<Category, List<PriorityQueueEntity>> queue = priorityQueueService.getAllQueuesGroupedByCategory();
+        Map<Category, List<PriorityQueueResponseDTO>> queue = priorityQueueService.getAllQueuesGroupedByCategory();
         model.addAttribute("filasPrioridade", queue);
         return "fragments/tax-managers";
     }
@@ -49,7 +49,7 @@ public class UserWebController {
         } catch (EntityAlreadyExistsException e) {
             redirectAttributes.addFlashAttribute("error", e.getMessage());
         }
-        return "redirect:/home/fiscais";
+        return "redirect:/gerenciador_de_servico/fiscais";
     }
 
     @PostMapping("/deletar")
@@ -57,9 +57,9 @@ public class UserWebController {
         try {
             userService.deleteUser(registration);
             redirectAttrs.addFlashAttribute("success", "Usuário deletado com sucesso!");
-        } catch (ResourceNotFoundException e) {
+        } catch (ResourceNotFoundException | IllegalStateException e) {
             redirectAttrs.addFlashAttribute("error", e.getMessage());
         }
-        return "redirect:/home/fiscais";
+        return "redirect:/gerenciador_de_servico/fiscais";
     }
 }

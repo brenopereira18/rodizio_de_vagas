@@ -17,7 +17,7 @@
     </div>
 
     <!-- Filtro -->
-    <form method="get" th:action="@{/home/servicos/disponiveis}" class="mb-6">
+    <form method="get" th:action="@{/gerenciador_de_servico/servicos/disponiveis}" class="mb-6">
         <label for="filter" class="text-sm font-medium text-slate-700 mr-2">Filtrar:</label>
         <select name="filter" id="filter" onchange="this.form.submit()"
                 class="border border-slate-300 rounded px-2 py-1 text-sm">
@@ -137,7 +137,7 @@
                     Editar
                 </button>
 
-                <form th:action="@{/home/servicos/deletar}" method="post"
+                <form th:action="@{/gerenciador_de_servico/servicos/deletar}" method="post"
                       onsubmit="return confirm('Tem certeza que deseja excluir este serviço?');">
                     <input type="hidden" name="id" th:value="${servico.work.id}"/>
                     <button type="submit" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded">Excluir
@@ -151,7 +151,7 @@
     <div id="modal-servico" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
         <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-md mx-4">
             <h2 class="text-lg md:text-xl font-bold mb-4">Novo Serviço</h2>
-            <form th:action="@{/home/servicos}" method="post" class="flex flex-col gap-4 text-sm">
+            <form th:action="@{/gerenciador_de_servico/servicos}" method="post" class="flex flex-col gap-4 text-sm">
                 <input type="text" name="title" placeholder="Título" required
                        class="border border-slate-300 rounded px-2 py-1 w-full"/>
                 <input type="text" name="location" placeholder="Local" required
@@ -199,7 +199,7 @@
          class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
         <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-md mx-4">
             <h2 class="text-lg md:text-xl font-bold mb-4">Editar Serviço</h2>
-            <form id="form-editar-servico" th:action="@{/home/servicos/atualizar}" method="post"
+            <form id="form-editar-servico" th:action="@{/gerenciador_de_servico/servicos/atualizar}" method="post"
                   class="flex flex-col gap-4">
                 <input type="hidden" name="id" id="edit-id"/>
                 <input type="text" name="title" id="edit-title" placeholder="Título" required

@@ -1,8 +1,10 @@
 package com.rodizio_de_vagas.rodizioDeVagas.web.controllers;
 
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.priorityQueue.entity.PriorityQueueEntity;
+import com.rodizio_de_vagas.rodizioDeVagas.api.modules.priorityQueue.entity.dto.PriorityQueueResponseDTO;
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.priorityQueue.service.PriorityQueueService;
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.work.entity.Category;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
@@ -14,18 +16,18 @@ import java.util.List;
 import java.util.Map;
 
 @Controller
-@PreAuthorize("hasAuthority('ADMINISTRADOR')")
-@RequestMapping("/home/fila-de-prioridade")
+@PreAuthorize("hasAuthority('ROLE_ADMINISTRADOR')")
+@RequestMapping("/gerenciador_de_servico/fila-de-prioridade")
+@RequiredArgsConstructor
 public class PriorityQueueWebController {
 
-    @Autowired
-    private PriorityQueueService priorityQueueService;
+    private final PriorityQueueService priorityQueueService;
 
     @GetMapping
     public String showPriorityQueue(Model model) {
-        model.addAttribute("pageTitle", "Fila de Prioridade");
-        Map<Category, List<PriorityQueueEntity>> queue = priorityQueueService.getAllQueuesGroupedByCategory();
+        Map<Category, List<PriorityQueueResponseDTO>> queue = priorityQueueService.getAllQueuesGroupedByCategory();
         model.addAttribute("filasPrioridade", queue);
+        model.addAttribute("pageTitle", "Fila de Prioridade");
         return "fragments/priority-queue";
     }
 }

@@ -11,21 +11,18 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-@Data
+
 @Builder
-@NoArgsConstructor
-@AllArgsConstructor
-public class TaxRefusalEvent {
+public record TaxRefusalEvent(
+    String eventId,
+    Long taxId,
+    String taxRegistration,
+    Category category,
+    Long serviceId,
+    LocalDateTime timestamp
+) {
 
-    private String eventId;
-    private Long taxId;
-    private String taxRegistration;
-    private Category category;
-    private Long serviceId;
-    private LocalDateTime timestamp;
-
-    public static TaxRefusalEvent create(Long taxId, String registration,
-                                            Category category, Long serviceId) {
+    public static TaxRefusalEvent create(Long taxId, String registration, Category category, Long serviceId) {
         return TaxRefusalEvent.builder()
             .eventId(UUID.randomUUID().toString())
             .taxId(taxId)
@@ -38,25 +35,40 @@ public class TaxRefusalEvent {
 
     // Converter para Map (formato Redis Stream)
     public Map<String, Object> toMap() {
-        Map<String, Object> map = new HashMap<>();
-        map.put("eventId", eventId);
-        map.put("taxId", taxId.toString());
-        map.put("taxRegistration", taxRegistration);
-        map.put("category", category.name());
-        map.put("serviceId", serviceId.toString());
-        map.put("timestamp", timestamp.toString());
-        return map;
+        return Map.of(
+            "eventId",         eventId,
+            "taxId",           taxId.toString(),
+            "taxRegistration", taxRegistration,
+            "category",        category.name(),
+            "serviceId",       serviceId.toString(),
+            "timestamp",       timestamp.toString()
+        );
     }
 
     // Criar a partir de Map (leitura Redis Stream)
     public static TaxRefusalEvent fromMap(Map<String, Object> map) {
+        validateField(map, "eventId");
+        validateField(map, "taxId");
+        validateField(map, "taxRegistration");
+        validateField(map, "category");
+        validateField(map, "serviceId");
+        validateField(map, "timestamp");
+
         return TaxRefusalEvent.builder()
-            .eventId((String) map.get("eventId"))
+            .eventId(map.get("eventId").toString())
             .taxId(Long.valueOf(map.get("taxId").toString()))
-            .taxRegistration((String) map.get("taxRegistration"))
+            .taxRegistration(map.get("taxRegistration").toString())
             .category(Category.valueOf(map.get("category").toString()))
             .serviceId(Long.valueOf(map.get("serviceId").toString()))
             .timestamp(LocalDateTime.parse(map.get("timestamp").toString()))
             .build();
+    }
+
+    private static void validateField(Map<String, Object> map, String field) {
+        if (map.get(field) == null) {
+            throw new IllegalArgumentException(
+                "Campo obrigatório ausente no evento Redis: " + field
+            );
+        }
     }
 }

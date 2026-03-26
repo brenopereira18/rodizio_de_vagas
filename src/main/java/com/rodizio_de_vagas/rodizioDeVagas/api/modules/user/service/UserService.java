@@ -4,6 +4,7 @@ import com.rodizio_de_vagas.rodizioDeVagas.api.exceptions.EntityAlreadyExistsExc
 import com.rodizio_de_vagas.rodizioDeVagas.api.exceptions.ResourceNotFoundException;
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.WorkCategoryPreference.service.WorkCategoryPreferenceService;
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.enrollment.entity.EnrollmentEntity;
+import com.rodizio_de_vagas.rodizioDeVagas.api.modules.enrollment.entity.SubscriptionStatus;
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.enrollment.repository.EnrollmentRepository;
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.notification.entity.NotificationEntity;
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.notification.repository.NotificationRepository;
@@ -16,35 +17,31 @@ import com.rodizio_de_vagas.rodizioDeVagas.api.modules.user.entity.dto.RequestUp
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.user.entity.dto.ResponseUserDTO;
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.user.repository.UserRepository;
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.work.entity.Category;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Stream;
 
 @Service
+@RequiredArgsConstructor
 public class UserService {
 
-    @Autowired
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
+    private final PriorityQueueService priorityQueueService;
+    private final EnrollmentRepository enrollmentRepository;
+    private final NotificationRepository notificationRepository;
+    private final PriorityQueueRepository priorityQueueRepository;
+    private final WorkCategoryPreferenceService workCategoryPreferenceService;
+    private final PasswordEncoder passwordEncoder;
 
-    @Autowired
-    private PriorityQueueService priorityQueueService;
-
-    @Autowired
-    private EnrollmentRepository enrollmentRepository;
-
-    @Autowired
-    private NotificationRepository notificationRepository;
-
-    @Autowired
-    private PriorityQueueRepository priorityQueueRepository;
-
-    @Autowired
-    private WorkCategoryPreferenceService workCategoryPreferenceService;
-
-    public UserEntity createUser(RequestCreateUserDTO userDTO) {
+    @Transactional
+    public ResponseUserDTO createUser(RequestCreateUserDTO userDTO) {
         this.userRepository.findByRegistration(userDTO.registration())
             .ifPresent(u -> {
                 throw new EntityAlreadyExistsException("Fiscal já cadastrado.");
@@ -55,7 +52,7 @@ public class UserService {
                 throw new EntityAlreadyExistsException("Telefone já cadastrado.");
             });
 
-        String encryptedPassword = new BCryptPasswordEncoder().encode(userDTO.registration());
+        String encryptedPassword = passwordEncoder.encode(userDTO.registration());
         UserEntity user = UserEntity.builder()
             .fullName(userDTO.fullName())
             .registration(userDTO.registration())
@@ -73,68 +70,84 @@ public class UserService {
                 this.priorityQueueService.activateFiscalInCategory(user.getRegistration(), category);
             }
         }
-        return user;
+        return toResponseDTO(user);
     }
 
-     public UserEntity getUser(String registration) {
-        return this.userRepository.findByRegistration(registration).orElseThrow(() ->
+    public ResponseUserDTO getUser(String registration) {
+        UserEntity user = this.userRepository.findByRegistration(registration).orElseThrow(() ->
             new ResourceNotFoundException("Fiscal não encontrado."));
-     }
+        return toResponseDTO(user);
+    }
 
      public List<ResponseUserDTO> getAllTax() {
-         List<UserEntity> tax = this.userRepository.findByUserRole(UserRole.FISCAL);
-
-         return tax.stream().map(
-             s -> new ResponseUserDTO(s.getId(), s.getFullName(), s.getRegistration(), s.getPhoneNumber(), s.getHaveALicense())
-         ).toList();
+         return this.userRepository.findByUserRole(UserRole.FISCAL)
+             .stream().map(this::toResponseDTO).toList();
      }
 
      public List<ResponseUserDTO> getAllAdmins() {
-         List<UserEntity> admins = this.userRepository.findByUserRole(UserRole.ADMINISTRADOR);
-
-         return admins.stream().map(
-             s -> new ResponseUserDTO(s.getId(), s.getFullName(), s.getRegistration(), s.getPhoneNumber(), s.getHaveALicense())
-         ).toList();
+         return this.userRepository.findByUserRole(UserRole.ADMINISTRADOR)
+             .stream().map(this::toResponseDTO).toList();
      }
 
      public List<ResponseUserDTO> getAllManagers() {
-        List<UserEntity> managers = this.userRepository.findByUserRole(UserRole.SUPERVISOR);
-
-        return managers.stream().map(
-            s -> new ResponseUserDTO(s.getId(), s.getFullName(), s.getRegistration(), s.getPhoneNumber(), s.getHaveALicense())
-        ).toList();
+         return this.userRepository.findByUserRole(UserRole.SUPERVISOR)
+             .stream().map(this::toResponseDTO).toList();
      }
 
     public List<ResponseUserDTO> getAllAdminsAndManagers() {
-        List<ResponseUserDTO> admins = getAllAdmins();
-        List<ResponseUserDTO> managers = getAllManagers();
-
-        List<ResponseUserDTO> combinedList = Stream.concat(admins.stream(), managers.stream()).toList();
-        return combinedList;
+        return Stream.concat(getAllAdmins().stream(), getAllManagers().stream()).toList();
     }
 
-     public UserEntity updateUser(String registration, RequestUpdateUserDTO dto) {
+    @Transactional
+     public ResponseUserDTO updateUser(String registration, RequestUpdateUserDTO dto) {
         UserEntity user = this.userRepository.findByRegistration(registration).orElseThrow(() ->
             new ResourceNotFoundException("Fiscal não encontrado."));
 
-        user.setPhoneNumber(dto.phoneNumber());
-        user.setHaveALicense(dto.haveALicense());
+        if (dto.phoneNumber() != null && !dto.phoneNumber().equals(user.getPhoneNumber())) {
+            this.userRepository.findByPhoneNumber(dto.phoneNumber())
+                .ifPresent(u -> {
+                    throw new EntityAlreadyExistsException("Telefone já cadastrado por outro usuário.");
+                });
+            user.setPhoneNumber(dto.phoneNumber());
+        }
+        if (dto.haveALicense() != null) {
+            user.setHaveALicense(dto.haveALicense());
+        }
 
         if (dto.password() != null && !dto.password().isBlank()) {
-            String encryptedPassword = new BCryptPasswordEncoder().encode(dto.password());
-            user.setPassword(encryptedPassword);
+            user.setPassword(passwordEncoder.encode(dto.password()));
         }
+
         this.userRepository.save(user);
 
-        this.workCategoryPreferenceService.syncPreferences(user.getRegistration(), dto.categorys());
-        return user;
+        if (dto.categories() != null) {
+            this.workCategoryPreferenceService.syncPreferences(user.getRegistration(), dto.categories());
+        }
+        return toResponseDTO(user);
      }
 
+    @Transactional
      public void deleteUser(String registration) {
          UserEntity user = this.userRepository.findByRegistration(registration).orElseThrow(() ->
              new ResourceNotFoundException("Fiscal não encontrado."));
 
          if (user.getUserRole().equals(UserRole.FISCAL)) {
+             boolean hasActiveEnrollments = enrollmentRepository
+                 .findByUserEntity(user)
+                 .stream()
+                 .anyMatch(e ->
+                     (e.getSubscriptionStatus() == SubscriptionStatus.WAITING ||
+                         e.getSubscriptionStatus() == SubscriptionStatus.ACCEPTED) &&
+                         e.getWorkEntity().getServiceDate().isAfter(LocalDateTime.now())
+                 );
+
+             if (hasActiveEnrollments) {
+                 throw new IllegalStateException(
+                     "Não é possível excluir o fiscal pois ele possui inscrições ativas em serviços futuros. " +
+                         "Cancele ou recuse as inscrições antes de excluir."
+                 );
+             }
+
              for (Category category : Category.values()) {
                  if (priorityQueueRepository.findByUserEntityRegistrationAndCategory(registration, category).isPresent()) {
                      this.priorityQueueService.deactivateFiscalFromCategory(registration, category);
@@ -155,4 +168,15 @@ public class UserService {
          }
          this.userRepository.delete(user);
      }
+
+    private ResponseUserDTO toResponseDTO(UserEntity user) {
+        return new ResponseUserDTO(
+            user.getId(),
+            user.getFullName(),
+            user.getRegistration(),
+            user.getPhoneNumber(),
+            user.getHaveALicense(),
+            user.getUserRole()
+        );
+    }
 }

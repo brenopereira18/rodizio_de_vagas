@@ -16,6 +16,8 @@ import com.rodizio_de_vagas.rodizioDeVagas.api.modules.work.entity.WorkEntity;
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.work.entity.WorkStatus;
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.work.repository.WorkRepository;
 import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -29,25 +31,15 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
+@Slf4j
 public class EnrollmentService {
 
-    @Autowired
-    private EnrollmentRepository enrollmentRepository;
-
-    @Autowired
-    private WorkRepository workRepository;
-
-    @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
-    private NotificationService notificationService;
-
-    @Autowired
-    private PriorityQueueService priorityQueueService;
-
-    @Autowired
-    private RedisEventService redisEventService;
+    private final EnrollmentRepository enrollmentRepository;
+    private final WorkRepository workRepository;
+    private final UserRepository userRepository;
+    private final NotificationService notificationService;
+    private final RedisEventService redisEventService;
 
     /**
      * Atualiza a resposta do fiscal (aceitar ou recusar) e o move para o final da fila.
@@ -82,11 +74,9 @@ public class EnrollmentService {
 
     @Transactional
     public void reusePreviousEnrollment(Long workId, String registration) {
-        // Busca o fiscal
         UserEntity fiscal = userRepository.findByRegistration(registration)
             .orElseThrow(() -> new ResourceNotFoundException("Fiscal não encontrado"));
 
-        // Busca o serviço
         WorkEntity work = workRepository.findById(workId)
             .orElseThrow(() -> new ResourceNotFoundException("Serviço não encontrado"));
 
@@ -110,8 +100,7 @@ public class EnrollmentService {
         enrollmentRepository.save(enrollment);
 
         // Se após aceitar essa, não sobrarem vagas, fecha o serviço
-        totalAccepted += 1;
-        if (totalAccepted >= work.getNumberOfVacancies()) {
+        if (totalAccepted + 1 >= work.getNumberOfVacancies()) {
             work.setWorkStatus(WorkStatus.CLOSED);
             workRepository.save(work);
         }
@@ -125,15 +114,19 @@ public class EnrollmentService {
         UserEntity user = enrollment.getUserEntity();
         Category category = work.getCategory();
 
-        List<EnrollmentEntity> worksWithRegistrationOnHold = this.enrollmentRepository
+        // Coleta inscrições WAITING do mesmo fiscal na mesma categoria
+        // antes de cancelá-las, para notificar o próximo da fila em cada serviço afetado.
+        List<EnrollmentEntity> otherPendingEnrollments = this.enrollmentRepository
             .findByUserEntityIdAndWorkEntityCategoryAndSubscriptionStatus(user.getId(), category, SubscriptionStatus.WAITING)
             .stream()
             .filter(e -> !e.getWorkEntity().getId().equals(work.getId()))
             .toList();
 
+        // Cancela em batch via UPDATE — uma única query no banco.
         this.enrollmentRepository.cancelOtherEnrollmentsInCategory(user.getId(), category, work.getId());
 
-        worksWithRegistrationOnHold.forEach(pendingEnrollment ->
+        // Notifica o próximo fiscal para cada serviço que ficou sem inscrição.
+        otherPendingEnrollments.forEach(pendingEnrollment ->
             notificationService.notifyNextTax(pendingEnrollment.getWorkEntity(), category)
         );
     }
@@ -156,15 +149,15 @@ public class EnrollmentService {
     private void finalizeWorkStatus(WorkEntity work) {
         int totalAccepted = this.enrollmentRepository.countByWorkEntityAndSubscriptionStatus(work, SubscriptionStatus.ACCEPTED);
         int waitingCount = this.enrollmentRepository.countByWorkEntityAndSubscriptionStatus(work, SubscriptionStatus.WAITING);
-        int totalVacancies = work.getNumberOfVacancies();
 
-        if (totalAccepted >= totalVacancies) {
+        if (totalAccepted >= work.getNumberOfVacancies()) {
             closeWork(work);
             return;
         }
 
-        if (totalAccepted + waitingCount >= totalVacancies) {
-            // Ainda há fiscais aguardando, não notifica ninguém novo ainda
+        // Se há fiscais suficientes aguardando para cobrir as vagas restantes,
+        // não notifica ninguém novo — evita over-notificação.
+        if (totalAccepted + waitingCount >= work.getNumberOfVacancies()) {
             return;
         }
 
@@ -182,38 +175,38 @@ public class EnrollmentService {
     public void processExpiredNotifications() {
         LocalTime now = LocalTime.now(ZoneId.of("America/Sao_Paulo"));
         if (now.isBefore(LocalTime.of(7, 0)) || now.isAfter(LocalTime.of(20, 0))) {
-            System.out.println("Fora do horário útil (entre 20h e 7h), não processando inscrições expiradas agora.");
+            log.debug("Fora do horário útil, scheduler de inscrições expiradas ignorado.");
             return;
         }
 
         List<EnrollmentEntity> expiredEnrollments = this.enrollmentRepository.findExpiredWaitingEnrollments();
+        if (expiredEnrollments.isEmpty()) {
+            log.debug("Nenhuma inscrição expirada encontrada.");
+            return;
+        }
 
-        // Agrupar as inscrições expiradas por categoria para processamento isolado
-        Map<Category, List<EnrollmentEntity>> groupedByCategories = expiredEnrollments.stream()
+        log.info("Processando {} inscrições expiradas.", expiredEnrollments.size());
+
+        expiredEnrollments.forEach(e -> e.setSubscriptionStatus(SubscriptionStatus.EXPIRED));
+        enrollmentRepository.saveAll(expiredEnrollments);
+
+        // Publica eventos Redis e agrupa por categoria para notificar o próximo fiscal.
+        Map<Category, List<EnrollmentEntity>> groupedByCategory = expiredEnrollments.stream()
             .collect(Collectors.groupingBy(e -> e.getWorkEntity().getCategory()));
 
-        for (Map.Entry<Category, List<EnrollmentEntity>> entry : groupedByCategories.entrySet()) {
-            Category category = entry.getKey();
-            List<EnrollmentEntity> enrollmentsInThisCategory = entry.getValue();
-
-            for (EnrollmentEntity enrollment : enrollmentsInThisCategory) {
-                // 1. Atualizar status para EXPIRED
-                enrollment.setSubscriptionStatus(SubscriptionStatus.EXPIRED);
-                this.enrollmentRepository.save(enrollment);
-
-                // 2. Publicar evento Redis para reorganização assíncrona
+        groupedByCategory.forEach((category, enrollments) -> {
+            enrollments.forEach(enrollment ->
                 redisEventService.publishTaxRefusal(
                     enrollment.getUserEntity().getId(),
                     enrollment.getUserEntity().getRegistration(),
                     enrollment.getWorkEntity().getCategory(),
                     enrollment.getWorkEntity().getId()
-                );
-            }
+                )
+            );
+            notificationService.notifyNextTax(enrollments.get(0).getWorkEntity(), category);
+        });
 
-            if (!enrollmentsInThisCategory.isEmpty()) {
-                notificationService.notifyNextTax(enrollmentsInThisCategory.get(0).getWorkEntity(), category);
-            }
-        }
+        log.info("Processamento de inscrições expiradas concluído. Total: {}", expiredEnrollments.size());
     }
 
     /**
@@ -221,68 +214,43 @@ public class EnrollmentService {
      *
      * @return Lista de serviços com as respectivas inscrições e status de cada inscrito.
      */
+    @Transactional
     public List<ResponseWorkWithTaxDTO> getGroupedEnrollmentsByMonth() {
-        LocalDate endDate = LocalDate.now();
-        LocalDate startDate = endDate.minusDays(30);
+        LocalDate startDate = LocalDate.now().minusDays(30);
 
         List<WorkEntity> works = this.workRepository.findAllWithEnrollmentsFromLastMonth(startDate.atStartOfDay())
             .stream()
             .sorted(Comparator.comparing(WorkEntity::getCreatedAt).reversed())
             .toList();
-        Map<WorkEntity, List<ResponseTaxInfosDTO>> groupedEnrollments = groupEnrollmentsFromWorks(works);
-        return buildResponse(groupedEnrollments);
-    }
 
-    // Agrupa as inscrições por título do serviço e mapeia as informações fiscais de cada inscrito
-    private Map<WorkEntity, List<ResponseTaxInfosDTO>> groupEnrollmentsFromWorks(List<WorkEntity> works) {
         return works.stream()
-            .collect(Collectors.toMap(
-                work -> work,
-                work -> {
-                    if (work.getEnrollments() == null) return List.of();
-                    return work.getEnrollments().stream()
-                        .filter(e -> e.getSubscriptionStatus() == SubscriptionStatus.ACCEPTED)
-                        .map(this::convertToTaxInfosDTO)
-                        .toList();
-                },
-                (e1, e2) -> e1,
-                LinkedHashMap::new
-            ));
+            .map(work -> new ResponseWorkWithTaxDTO(
+                work.getId(),
+                work.getTitle(),
+                work.getLocation(),
+                work.getServiceDate(),
+                work.getServiceEndDate(),
+                work.getManager() != null ? work.getManager().getFullName() : null,
+                work.getCategory(),
+                work.getNumberOfVacancies(),
+                work.getObservation(),
+                buildTaxInfos(work)
+            ))
+            .toList();
     }
 
-    private ResponseTaxInfosDTO convertToTaxInfosDTO(EnrollmentEntity enrollment) {
-        return new ResponseTaxInfosDTO(
-            enrollment.getUserEntity().getFullName(),
-            enrollment.getSubscriptionStatus()
-        );
+    private List<ResponseTaxInfosDTO> buildTaxInfos(WorkEntity work) {
+        if (work.getEnrollments() == null) return List.of();
+
+        return work.getEnrollments().stream()
+            .filter(e -> e.getSubscriptionStatus() == SubscriptionStatus.ACCEPTED)
+            .map(e -> new ResponseTaxInfosDTO(
+                e.getUserEntity().getFullName(),
+                e.getSubscriptionStatus()
+            ))
+            .toList();
     }
 
-    // Constrói a lista de resposta formatada para retornar os grupos com os respectivos inscritos
-    private List<ResponseWorkWithTaxDTO> buildResponse(Map<WorkEntity, List<ResponseTaxInfosDTO>> groupedEnrollments) {
-        return groupedEnrollments.entrySet().stream()
-            .map(entry -> {
-                WorkEntity work = entry.getKey();
-                return new ResponseWorkWithTaxDTO(
-                    work.getId(),
-                    work.getTitle(),
-                    work.getLocation(),
-                    work.getServiceDate(),
-                    work.getServiceEndDate(),
-                    work.getManager(),
-                    work.getCategory(),
-                    work.getNumberOfVacancies(),
-                    work.getObservation(),
-                    entry.getValue()
-                );
-            })
-            .collect(Collectors.toList());
-    }
-
-    /**
-     * Cancela inscrição do fiscal em um trabalho.
-     *
-     * @param enrollmentId id da inscrição
-     */
     @Transactional
     public void cancelEnrollment(Long enrollmentId, String registration) throws AccessDeniedException {
         EnrollmentEntity enrollment = this.enrollmentRepository.findById(enrollmentId).orElseThrow(() ->

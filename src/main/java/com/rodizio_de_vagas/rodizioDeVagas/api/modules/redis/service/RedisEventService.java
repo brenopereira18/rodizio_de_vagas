@@ -25,22 +25,18 @@ public class RedisEventService {
                 .add(streamName, event.toMap());
 
             log.info("Evento publicado no Redis: stream={}, recordId={}, fiscalId={}, categoria={}",
-                streamName, recordId, event.getTaxId(), event.getCategory());
+                streamName, recordId, event.taxId(), event.category());
 
         } catch (Exception e) {
             log.error("ERRO ao publicar evento no Redis: fiscalId={}, categoria={}, erro={}",
-                event.getTaxId(), event.getCategory(), e.getMessage());
+                event.taxId(), event.category(), e.getMessage());
 
-            // TODO: Implementar fallback (salvar no banco para processamento posterior)
             throw new RuntimeException("Falha ao publicar evento", e);
         }
     }
 
-    public void publishTaxRefusal(Long fiscalId, String registration,
-                                     Category category, Long serviceId) {
-        TaxRefusalEvent event = TaxRefusalEvent.create(
-            fiscalId, registration, category, serviceId
-        );
-        publishTaxRefusal(event);
+    // Método de conveniência — cria o evento e delega para o método principal.
+    public void publishTaxRefusal(Long fiscalId, String registration, Category category, Long serviceId) {
+        publishTaxRefusal(TaxRefusalEvent.create(fiscalId, registration, category, serviceId));
     }
 }

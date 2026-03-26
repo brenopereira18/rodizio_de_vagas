@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @Controller
-@RequestMapping("/home/inscricoes")
+@RequestMapping("/gerenciador_de_servico/inscricoes")
 @PreAuthorize("hasAuthority('ADMINISTRADOR') or hasAuthority('SUPERVISOR')")
 public class RegistrationWebController {
 
@@ -33,7 +33,7 @@ public class RegistrationWebController {
     @PostMapping("/servicos/{id}/observacao")
     public String updateObservation(@PathVariable Long id, @RequestParam String observation) {
         workService.updateObservation(id, observation);
-        return "redirect:/home/inscricoes";
+        return "redirect:/gerenciador_de_servico/inscricoes";
     }
 }
 

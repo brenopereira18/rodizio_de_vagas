@@ -99,7 +99,7 @@ public class NotificationService {
     }
 
     private void notifyTax(UserEntity tax, WorkEntity work) {
-        String link = "https://rodizio-de-vagas.onrender.com/home/servicos/disponiveis";
+        String link = "https://dmfurb.pjf.mg.gov.br/gerenciador_de_servico/servicos/disponiveis";
         String message = "Olá " + tax.getFullName() + ", temos um serviço disponível da categoria " + work.getCategory() +
             " no qual você tem prioridade. Acesse o link para visualizá-lo: " + link;
 
