@@ -17,6 +17,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
@@ -67,20 +68,17 @@ public class RedisEventConsumer {
                         .block(Duration.ofMillis(timeoutMs)),
                     StreamOffset.create(streamName, ReadOffset.lastConsumed()));
 
-            if (records != null && !records.isEmpty()) {
-                log.debug("Processando {} eventos do Redis", records.size());
+            if (records == null || records.isEmpty()) return;
+            log.debug("Processando {} eventos do Redis", records.size());
 
-                for (MapRecord<String, Object, Object> record : records) {
-                    processEvent(record);
-                }
+            for (MapRecord<String, Object, Object> record : records) {
+                processEvent(record);
             }
-
         } catch (Exception e) {
             log.error("Erro ao consumir eventos do Redis: {}", e.getMessage());
         }
     }
 
-    @Transactional
     public void processEvent(MapRecord<String, Object, Object> record) {
         try {
             Map<String, Object> eventData = convertToStringObjectMap(record.getValue());
@@ -89,52 +87,48 @@ public class RedisEventConsumer {
             TaxRefusalEvent event = TaxRefusalEvent.fromMap(eventData);
 
             log.info("Processando evento: eventId={}, fiscalId={}, categoria={}",
-                event.getEventId(), event.getTaxId(), event.getCategory());
+                event.eventId(), event.taxId(), event.category());
 
             // Verificar se fiscal ainda está na fila
             boolean fiscalInQueue = priorityQueueService.isFiscalInQueue(
-                event.getTaxId(), event.getCategory()
+                event.taxId(), event.category()
             );
 
             if (!fiscalInQueue) {
                 log.warn("Fiscal {} não está mais na fila {}, ignorando evento {}",
-                    event.getTaxId(), event.getCategory(), event.getEventId());
+                    event.taxId(), event.category(), event.eventId());
                 acknowledgeEvent(record);
                 return;
             }
 
             // Reorganizar fila
             priorityQueueService.sendFiscalToEndOfQueue(
-                Set.of(event.getTaxId()),
-                event.getCategory()
+                Set.of(event.taxId()),
+                event.category()
             );
 
             // Confirmar processamento
             acknowledgeEvent(record);
 
             log.info("Evento processado com sucesso: eventId={}, fiscalId={}, categoria={}",
-                event.getEventId(), event.getTaxId(), event.getCategory());
+                event.eventId(), event.taxId(), event.category());
 
         } catch (Exception e) {
             log.error("ERRO ao processar evento: recordId={}, erro={}",
-                record.getId(), e.getMessage());
+                record.getId(), e.getMessage(), e);
 
-            // TODO: Implementar retry ou dead letter queue
-            // Por enquanto, vamos acknowledgar para não travar a fila
+            // Acknowledge para não travar a fila.
+            // Implementar dead letter queue para reprocessamento seguro.
             acknowledgeEvent(record);
         }
     }
 
     private Map<String, Object> convertToStringObjectMap(Map<Object, Object> originalMap) {
-        Map<String, Object> convertedMap = new HashMap<>();
-
-        for (Map.Entry<Object, Object> entry : originalMap.entrySet()) {
-            String key = entry.getKey().toString();
-            Object value = entry.getValue();
-            convertedMap.put(key, value);
-        }
-
-        return convertedMap;
+        return originalMap.entrySet().stream()
+            .collect(Collectors.toMap(
+                entry -> entry.getKey().toString(),
+                Map.Entry::getValue
+            ));
     }
 
     private void acknowledgeEvent(MapRecord<String, Object, Object> record) {

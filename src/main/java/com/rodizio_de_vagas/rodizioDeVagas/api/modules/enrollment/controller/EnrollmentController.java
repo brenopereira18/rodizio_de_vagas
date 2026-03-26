@@ -2,6 +2,7 @@ package com.rodizio_de_vagas.rodizioDeVagas.api.modules.enrollment.controller;
 
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.enrollment.entity.dto.ResponseWorkWithTaxDTO;
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.enrollment.service.EnrollmentService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import org.springframework.http.ResponseEntity;
@@ -14,37 +15,38 @@ import java.util.List;
 
 @RequestMapping("/enrollment")
 @RestController
+@RequiredArgsConstructor
 public class EnrollmentController {
 
-    @Autowired
-    private EnrollmentService enrollmentService;
+    private final EnrollmentService enrollmentService;
 
     @PutMapping("/{workId}/respond")
     public ResponseEntity<String> respondToEnrollment(@PathVariable Long workId, Principal principal, @RequestParam boolean accepted) {
-        String registration = principal.getName();
-        enrollmentService.respondToEnrollment(workId, registration, accepted);
+        enrollmentService.respondToEnrollment(workId, principal.getName(), accepted);
         String message = accepted ? "Inscrição realizada com sucesso." : "Trabalho recusado. Próximo fiscal será notificado.";
         return ResponseEntity.ok(message);
     }
 
     @PutMapping("/servicos/free/{id}/respond")
-    public ResponseEntity<Void> acceptedWorkFree(@PathVariable Long id, Principal principal) {
+    public ResponseEntity<String> acceptedWorkFree(@PathVariable Long id, Principal principal) {
         enrollmentService.reusePreviousEnrollment(id, principal.getName());
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok("Inscrição realizada com sucesso.");
     }
 
 
-    @PreAuthorize("hasRole('ADMINISTRADOR')")
+    @PreAuthorize("hasAuthority('ROLE_ADMINISTRADOR')")
     @GetMapping
     public ResponseEntity<List<ResponseWorkWithTaxDTO>> getEnrollmentsGroupedByWork() {
-        List<ResponseWorkWithTaxDTO> result = this.enrollmentService.getGroupedEnrollmentsByMonth();
-        return ResponseEntity.ok().body(result);
+        return ResponseEntity.ok(enrollmentService.getGroupedEnrollmentsByMonth());
     }
 
     @PutMapping("/{id}/cancelled")
-    public ResponseEntity<String> cancelEnrollment(@PathVariable Long id, Principal principal) throws AccessDeniedException {
-        String registration = principal.getName();
-        this.enrollmentService.cancelEnrollment(id, registration);
-        return ResponseEntity.ok("Inscrição cancelada com sucesso.");
+    public ResponseEntity<String> cancelEnrollment(@PathVariable Long id, Principal principal) {
+        try {
+            enrollmentService.cancelEnrollment(id, principal.getName());
+            return ResponseEntity.ok("Inscrição cancelada com sucesso.");
+        } catch (AccessDeniedException e) {
+            return ResponseEntity.status(403).body(e.getMessage());
+        }
     }
 }

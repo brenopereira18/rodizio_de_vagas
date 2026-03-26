@@ -1,17 +1,16 @@
 package com.rodizio_de_vagas.rodizioDeVagas.api.modules.forgetPassword.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.user.entity.UserEntity;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.time.Instant;
 
 @Entity
 @Table(name = "restaurar_senha")
-@Data
+@Getter
+@Setter
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
@@ -21,12 +20,14 @@ public class ForgetPasswordTokenEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false, unique = true)
     private String token;
 
-    @OneToOne(fetch = FetchType.EAGER)
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(nullable = false, name = "user_id", unique = true)
+    @JsonIgnore
     private UserEntity userEntity;
 
-    @Column(name = "tempo_de_expiração")
+    @Column(name = "tempo_de_expiracao", nullable = false)
     private Instant expiryTime;
 }

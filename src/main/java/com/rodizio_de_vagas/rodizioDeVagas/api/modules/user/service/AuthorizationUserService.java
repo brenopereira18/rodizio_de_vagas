@@ -1,21 +1,21 @@
 package com.rodizio_de_vagas.rodizioDeVagas.api.modules.user.service;
 
-import com.rodizio_de_vagas.rodizioDeVagas.api.exceptions.ResourceNotFoundException;
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.user.repository.UserRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 @Service
+@RequiredArgsConstructor
 public class AuthorizationUserService implements UserDetailsService {
 
-    @Autowired
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
 
     @Override
-    public UserDetails loadUserByUsername(String registration) throws ResourceNotFoundException {
+    public UserDetails loadUserByUsername(String registration) throws UsernameNotFoundException {
         return userRepository.findByRegistration(registration)
-            .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado"));
+            .orElseThrow(() -> new UsernameNotFoundException("Usuário não encontrado"));
     }
 }

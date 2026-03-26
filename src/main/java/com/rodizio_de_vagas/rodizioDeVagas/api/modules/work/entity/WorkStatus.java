@@ -5,9 +5,13 @@ public enum WorkStatus {
     FREE("Livre"),
     CLOSED("Encerrada");
 
-    private String workStatus;
+    private  final String workStatus;
 
     WorkStatus(String workStatus) {
         this.workStatus = workStatus;
+    }
+
+    public String getWorkStatus() {
+        return workStatus;
     }
 }

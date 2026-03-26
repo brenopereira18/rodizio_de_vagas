@@ -1,11 +1,11 @@
 package com.rodizio_de_vagas.rodizioDeVagas.api.modules.work.controller;
 
-import com.rodizio_de_vagas.rodizioDeVagas.api.modules.work.entity.WorkEntity;
+import com.rodizio_de_vagas.rodizioDeVagas.api.modules.work.entity.dto.WorkResponseDTO;
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.work.entity.dto.RequestCreateOrUpdateWorkDTO;
-import com.rodizio_de_vagas.rodizioDeVagas.api.modules.work.entity.dto.WorkWithEnrollment;
+import com.rodizio_de_vagas.rodizioDeVagas.api.modules.work.entity.dto.WorkWithEnrollmentDTO;
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.work.entity.validation.OnCreate;
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.work.service.WorkService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
@@ -16,40 +16,38 @@ import java.util.List;
 
 @RequestMapping("/work")
 @RestController
+@RequiredArgsConstructor
 public class WorkController {
 
-    @Autowired
-    private WorkService workService;
+    private final WorkService workService;
 
-    @PreAuthorize("hasRole('ADMINISTRADOR')")
+    @PreAuthorize("hasAuthority('ROLE_ADMINISTRADOR')")
     @PostMapping
-    public ResponseEntity<WorkEntity> createWork(@Validated(OnCreate.class) @RequestBody RequestCreateOrUpdateWorkDTO dto) {
-        WorkEntity work = this.workService.createWork(dto);
-        return ResponseEntity.ok().body(work);
+    public ResponseEntity<WorkResponseDTO> createWork(@Validated(OnCreate.class) @RequestBody RequestCreateOrUpdateWorkDTO dto) {
+        WorkResponseDTO work = this.workService.createWork(dto);
+        return ResponseEntity.status(201).body(work);
     }
 
-    @PreAuthorize("hasRole('ADMINISTRADOR')")
+    @PreAuthorize("hasAuthority('ROLE_ADMINISTRADOR')")
     @PutMapping
-    public ResponseEntity<WorkEntity> updateWork(@RequestBody RequestCreateOrUpdateWorkDTO dto) {
-        WorkEntity work = this.workService.updateWork(dto);
-        return ResponseEntity.ok().body(work);
+    public ResponseEntity<WorkResponseDTO> updateWork(@RequestBody RequestCreateOrUpdateWorkDTO dto) {
+        WorkResponseDTO work = this.workService.updateWork(dto);
+        return ResponseEntity.ok(work);
     }
 
     @GetMapping("/available")
-    public ResponseEntity<List<WorkWithEnrollment>> getAvailableWorksForTax(Principal principal) {
-        String registration = principal.getName();
-        List<WorkWithEnrollment> works = this.workService.getAvailableWorksForTax(registration);
+    public ResponseEntity<List<WorkWithEnrollmentDTO>> getAvailableWorksForTax(Principal principal) {
+        List<WorkWithEnrollmentDTO> works = this.workService.getAvailableWorksForTax(principal.getName());
         return ResponseEntity.ok(works);
     }
 
     @GetMapping("/my-works")
-    public ResponseEntity<List<WorkWithEnrollment>> getMyWorks(Principal principal) {
-        String registration = principal.getName();
-        List<WorkWithEnrollment> myWorks = this.workService.getEnrolledWorksForTax(registration);
+    public ResponseEntity<List<WorkWithEnrollmentDTO>> getMyWorks(Principal principal) {
+        List<WorkWithEnrollmentDTO> myWorks = this.workService.getEnrolledWorksForTax(principal.getName());
         return ResponseEntity.ok(myWorks);
     }
 
-    @PreAuthorize("hasRole('ADMINISTRADOR')")
+    @PreAuthorize("hasAuthority('ROLE_ADMINISTRADOR')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteWork(@PathVariable Long id) {
         this.workService.deleteWork(id);

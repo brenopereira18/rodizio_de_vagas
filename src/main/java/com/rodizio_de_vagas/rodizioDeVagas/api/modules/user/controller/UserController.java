@@ -6,6 +6,7 @@ import com.rodizio_de_vagas.rodizioDeVagas.api.modules.user.entity.dto.RequestUp
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.user.entity.dto.ResponseUserDTO;
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.user.service.UserService;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -16,47 +17,43 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/user")
+@RequiredArgsConstructor
 public class UserController {
 
-    @Autowired
-    private UserService userService;
+    private final UserService userService;
 
-    @PreAuthorize("hasRole('ADMINISTRADOR')")
+    @PreAuthorize("hasAuthority('ROLE_ADMINISTRADOR')")
     @PostMapping("/register")
-    public ResponseEntity<UserEntity> createUser(@Valid @RequestBody RequestCreateUserDTO userDTO) {
-        UserEntity user = this.userService.createUser(userDTO);
-        return ResponseEntity.ok().body(user);
+    public ResponseEntity<ResponseUserDTO> createUser(@Valid @RequestBody RequestCreateUserDTO userDTO) {
+        ResponseUserDTO user = this.userService.createUser(userDTO);
+        return ResponseEntity.status(201).body(user);
     }
 
     @GetMapping("/profile")
-    public ResponseEntity<UserEntity> getUser(Principal principal) {
-        String registration = principal.getName();
-        UserEntity user = this.userService.getUser(registration);
-        return ResponseEntity.ok().body(user);
+    public ResponseEntity<ResponseUserDTO> getUser(Principal principal) {
+        ResponseUserDTO user = this.userService.getUser(principal.getName());
+        return ResponseEntity.ok(user);
     }
 
-    @PreAuthorize("hasRole('ADMINISTRADOR')")
+    @PreAuthorize("hasAuthority('ROLE_ADMINISTRADOR')")
     @GetMapping("/managers")
     public ResponseEntity<List<ResponseUserDTO>> getAllManagers() {
-        List<ResponseUserDTO> managers = this.userService.getAllManagers();
-        return ResponseEntity.ok(managers);
+        return ResponseEntity.ok(this.userService.getAllManagers());
     }
 
-    @PreAuthorize("hasRole('ADMINISTRADOR')")
+    @PreAuthorize("hasAuthority('ROLE_ADMINISTRADOR')")
     @GetMapping("/tax")
     public ResponseEntity<List<ResponseUserDTO>> getAllTax() {
-        List<ResponseUserDTO> tax = this.userService.getAllTax();
-        return ResponseEntity.ok(tax);
+        return ResponseEntity.ok(this.userService.getAllTax());
     }
 
     @PutMapping("/profile")
-    public ResponseEntity<UserEntity> updateUser(Principal principal,@Valid  @RequestBody RequestUpdateUserDTO dto) {
-        String registration = principal.getName();
-        UserEntity user = this.userService.updateUser(registration, dto);
-        return ResponseEntity.ok().body(user);
+    public ResponseEntity<ResponseUserDTO> updateUser(Principal principal,@Valid  @RequestBody RequestUpdateUserDTO dto) {
+        ResponseUserDTO user = this.userService.updateUser(principal.getName(), dto);
+        return ResponseEntity.ok(user);
     }
 
-    @PreAuthorize("hasRole('ADMINISTRADOR')")
+    @PreAuthorize("hasAuthority('ROLE_ADMINISTRADOR')")
     @DeleteMapping
     public ResponseEntity<Void> deleteUser(@RequestParam String registration) {
         this.userService.deleteUser(registration);

@@ -6,7 +6,7 @@ public enum Category {
     EVENTO("Evento"),
     FEIRA_DE_DOMINGO("Feira de Domingo");
 
-    private String category;
+    private final String category;
 
     Category(String category) {
         this.category = category;

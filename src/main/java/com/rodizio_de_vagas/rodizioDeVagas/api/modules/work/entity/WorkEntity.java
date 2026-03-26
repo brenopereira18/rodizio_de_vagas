@@ -1,5 +1,6 @@
 package com.rodizio_de_vagas.rodizioDeVagas.api.modules.work.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.enrollment.entity.EnrollmentEntity;
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.notification.entity.NotificationEntity;
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.user.entity.UserEntity;
@@ -8,18 +9,16 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
-@Data
 @Table(name = "servico")
+@Getter
+@Setter
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
@@ -47,7 +46,7 @@ public class WorkEntity {
     @NotNull
     private LocalDateTime serviceEndDate;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "supervisor_id")
     private UserEntity manager;
 
@@ -66,6 +65,7 @@ public class WorkEntity {
     private Integer numberOfVacancies;
 
     @OneToMany(mappedBy = "workEntity", cascade = CascadeType.REMOVE, orphanRemoval = true)
+    @JsonIgnore
     private List<EnrollmentEntity> enrollments;
 
     @OneToMany(mappedBy = "workEntity", cascade = CascadeType.REMOVE, orphanRemoval = true)

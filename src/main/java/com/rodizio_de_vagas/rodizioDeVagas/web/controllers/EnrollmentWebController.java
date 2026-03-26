@@ -1,6 +1,9 @@
 package com.rodizio_de_vagas.rodizioDeVagas.web.controllers;
 
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.enrollment.service.EnrollmentService;
+import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -13,12 +16,13 @@ import java.security.Principal;
 
 @Controller
 @RequestMapping("/inscricoes")
+@RequiredArgsConstructor
 public class EnrollmentWebController {
 
-    @Autowired
-    private EnrollmentService enrollmentService;
+    private static final Logger log = LoggerFactory.getLogger(EnrollmentWebController.class);
+    private final EnrollmentService enrollmentService;
 
-    @PostMapping("/inscrever/{id}")
+    @PostMapping("/gerenciador_de_servico/{id}/inscrever")
     public String register(@PathVariable("id") Long workId, Principal principal, RedirectAttributes redirectAttributes) {
         try {
             enrollmentService.respondToEnrollment(workId, principal.getName(), true);
@@ -26,16 +30,16 @@ public class EnrollmentWebController {
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", "Erro ao se inscrever: " + e.getMessage());
         }
-        return "redirect:/home/servicos";
+        return "redirect:/gerenciador_de_servico/servicos";
     }
 
-    @PostMapping("/servicos/free/inscrever/{id}")
-    public String acceptedServiceFree(@PathVariable Long id, Principal principal) {
+    @PostMapping("/servicos/free/{id}/inscrever")
+    public String registerFreeService(@PathVariable Long id, Principal principal) {
         enrollmentService.reusePreviousEnrollment(id, principal.getName());
-        return "redirect:/home/servicos";
+        return "redirect:/gerenciador_de_servico/servicos";
     }
 
-    @PostMapping("/recusar/{id}")
+    @PostMapping("/{id}/recusar")
     public String refuse(@PathVariable("id") Long workId, Principal principal, RedirectAttributes redirectAttributes) {
         try {
             enrollmentService.respondToEnrollment(workId, principal.getName(), false);
@@ -43,15 +47,15 @@ public class EnrollmentWebController {
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", "Erro ao recusar inscrição: " + e.getMessage());
         }
-        return "redirect:/home/servicos";
+        return "redirect:/gerenciador_de_servico/servicos";
     }
 
-    @PostMapping("/cancelar/{id}")
+    @PostMapping("/{id}/cancelar")
     public String cancelEnrollment(@PathVariable Long id, Principal principal) throws AccessDeniedException {
         String registration = principal.getName();
         enrollmentService.cancelEnrollment(id, registration);
 
-        return "redirect:/home/servicos?filtro=INSCRITOS";
+        return "redirect:/gerenciador_de_servico/servicos?filtro=INSCRITOS";
     }
 
 }

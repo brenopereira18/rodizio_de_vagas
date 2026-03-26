@@ -1,12 +1,12 @@
 package com.rodizio_de_vagas.rodizioDeVagas.web.controllers;
 
-import com.rodizio_de_vagas.rodizioDeVagas.api.modules.WorkCategoryPreference.entity.WorkCategoryPreferenceEntity;
+import com.rodizio_de_vagas.rodizioDeVagas.api.modules.WorkCategoryPreference.entity.dto.WorkCategoryPreferenceResponseDTO;
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.WorkCategoryPreference.service.WorkCategoryPreferenceService;
-import com.rodizio_de_vagas.rodizioDeVagas.api.modules.user.entity.UserEntity;
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.user.entity.dto.RequestUpdateUserDTO;
+import com.rodizio_de_vagas.rodizioDeVagas.api.modules.user.entity.dto.ResponseUserDTO;
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.user.service.UserService;
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.work.entity.Category;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -16,28 +16,26 @@ import java.security.Principal;
 import java.util.List;
 
 @Controller
-@RequestMapping("/home/perfil")
+@RequestMapping("/gerenciador_de_servico/perfil")
+@RequiredArgsConstructor
 public class ProfileWebController {
 
-    @Autowired
-    private UserService userService;
-
-    @Autowired
-    private WorkCategoryPreferenceService workCategoryPreferenceService;
+    private final UserService userService;
+    private final WorkCategoryPreferenceService workCategoryPreferenceService;
 
     @GetMapping
     public String profile(Model model, Principal principal) {
-        UserEntity user = userService.getUser(principal.getName());
-        List<WorkCategoryPreferenceEntity> preferences = workCategoryPreferenceService.getPreferencesByUser(user.getRegistration());
+        ResponseUserDTO user = userService.getUser(principal.getName());
+        List<WorkCategoryPreferenceResponseDTO> preferences = workCategoryPreferenceService.getPreferencesByUser(user.registration());
 
         RequestUpdateUserDTO dto = new RequestUpdateUserDTO(
-            user.getPassword(),
-            user.getPhoneNumber(),
+            null,
+            user.phoneNumber(),
             preferences.stream()
-                .filter(WorkCategoryPreferenceEntity::isActive)
-                .map(WorkCategoryPreferenceEntity::getCategory)
+                .filter(WorkCategoryPreferenceResponseDTO::active)
+                .map(WorkCategoryPreferenceResponseDTO::category)
                 .toList(),
-            user.getHaveALicense()
+            user.haveALicense()
         );
 
         model.addAttribute("usuario", user);
@@ -58,6 +56,6 @@ public class ProfileWebController {
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", "Erro ao atualizar: " + e.getMessage());
         }
-        return "redirect:/home/perfil";
+        return "redirect:/gerenciador_de_servico/perfil";
     }
 }

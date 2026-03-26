@@ -7,9 +7,13 @@ public enum SubscriptionStatus {
     CANCELLED("Cancelado"),
     EXPIRED("Expirado");
 
-    private String subscriptionStatus;
+    private final String subscriptionStatus;
 
     SubscriptionStatus(String subscriptionStatus) {
         this.subscriptionStatus = subscriptionStatus;
+    }
+
+    public String getSubscriptionStatus() {
+        return subscriptionStatus;
     }
 }
