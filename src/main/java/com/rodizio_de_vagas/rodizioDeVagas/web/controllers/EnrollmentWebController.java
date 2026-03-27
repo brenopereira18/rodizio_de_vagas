@@ -15,14 +15,14 @@ import java.nio.file.AccessDeniedException;
 import java.security.Principal;
 
 @Controller
-@RequestMapping("/inscricoes")
+@RequestMapping(RoutesController.BASE + "servicos")
 @RequiredArgsConstructor
 public class EnrollmentWebController {
 
     private static final Logger log = LoggerFactory.getLogger(EnrollmentWebController.class);
     private final EnrollmentService enrollmentService;
 
-    @PostMapping("/gerenciador_de_servico/{id}/inscrever")
+    @PostMapping("/{id}/inscrever")
     public String register(@PathVariable("id") Long workId, Principal principal, RedirectAttributes redirectAttributes) {
         try {
             enrollmentService.respondToEnrollment(workId, principal.getName(), true);
@@ -33,9 +33,15 @@ public class EnrollmentWebController {
         return "redirect:/gerenciador_de_servico/servicos";
     }
 
-    @PostMapping("/servicos/free/{id}/inscrever")
-    public String registerFreeService(@PathVariable Long id, Principal principal) {
-        enrollmentService.reusePreviousEnrollment(id, principal.getName());
+    @PostMapping("/free/{id}/inscrever")
+    public String registerFreeService(@PathVariable Long id, Principal principal, RedirectAttributes redirectAttributes) {
+        try {
+            enrollmentService.reusePreviousEnrollment(id, principal.getName());
+            redirectAttributes.addFlashAttribute("success", "Inscrição realizada com sucesso.");
+        } catch (Exception e) {
+            log.warn("Erro ao se inscrever em serviço livre", e);
+            redirectAttributes.addFlashAttribute("error", "Erro ao se inscrever: " + e.getMessage());
+        }
         return "redirect:/gerenciador_de_servico/servicos";
     }
 
@@ -51,9 +57,14 @@ public class EnrollmentWebController {
     }
 
     @PostMapping("/{id}/cancelar")
-    public String cancelEnrollment(@PathVariable Long id, Principal principal) throws AccessDeniedException {
-        String registration = principal.getName();
-        enrollmentService.cancelEnrollment(id, registration);
+    public String cancelEnrollment(@PathVariable Long id, Principal principal, RedirectAttributes redirectAttributes) {
+        try {
+            enrollmentService.cancelEnrollment(id, principal.getName());
+            redirectAttributes.addFlashAttribute("success", "Inscrição cancelada com sucesso.");
+        } catch (Exception e) {
+            log.warn("Erro ao cancelar inscrição", e);
+            redirectAttributes.addFlashAttribute("error", "Erro ao cancelar inscrição: " + e.getMessage());
+        }
 
         return "redirect:/gerenciador_de_servico/servicos?filtro=INSCRITOS";
     }

@@ -7,6 +7,7 @@ import com.rodizio_de_vagas.rodizioDeVagas.api.modules.user.entity.dto.ResponseU
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.user.service.UserService;
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.work.entity.Category;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -16,8 +17,9 @@ import java.security.Principal;
 import java.util.List;
 
 @Controller
-@RequestMapping("/gerenciador_de_servico/perfil")
+@RequestMapping(RoutesController.BASE + "/perfil")
 @RequiredArgsConstructor
+@PreAuthorize("isAuthenticated()")
 public class ProfileWebController {
 
     private final UserService userService;

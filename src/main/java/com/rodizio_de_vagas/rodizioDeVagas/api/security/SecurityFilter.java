@@ -6,6 +6,9 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -15,13 +18,12 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 
 @Component
+@RequiredArgsConstructor
 public class SecurityFilter extends OncePerRequestFilter {
 
-    @Autowired
-    private TokenProvider tokenProvider;
-
-    @Autowired
-    private UserRepository userRepository;
+    private final TokenProvider tokenProvider;
+    private final UserRepository userRepository;
+    private static final Logger logger = LoggerFactory.getLogger(SecurityFilter.class);
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
@@ -31,14 +33,18 @@ public class SecurityFilter extends OncePerRequestFilter {
             try {
                 var login = tokenProvider.validationToken(token);
                 if (login != null) {
-                    var user = this.userRepository.findByRegistration(login);
-                    if (user.isPresent()) {
-                        var authentication = new UsernamePasswordAuthenticationToken(user.get(), null, user.get().getAuthorities());
-                        SecurityContextHolder.getContext().setAuthentication(authentication);
-                    }
+                    userRepository.findByRegistration(login)
+                        .ifPresent(user -> {
+                            var authentication = new UsernamePasswordAuthenticationToken(
+                                user,
+                                null,
+                                user.getAuthorities()
+                            );
+                            SecurityContextHolder.getContext().setAuthentication(authentication);
+                        });
                 }
             } catch (Exception ex) {
-                System.out.println("Token inválido: " + ex.getMessage());
+                logger.warn("Token inválido: {}", ex.getMessage());
             }
         }
         filterChain.doFilter(request, response);
@@ -46,7 +52,10 @@ public class SecurityFilter extends OncePerRequestFilter {
 
     private String recoverToken(HttpServletRequest request) {
         var authHeader = request.getHeader("Authorization");
-        if (authHeader == null) return null;
-        return authHeader.replace("Bearer ", "");
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            return null;
+        }
+
+        return authHeader.substring(7);
     }
 }

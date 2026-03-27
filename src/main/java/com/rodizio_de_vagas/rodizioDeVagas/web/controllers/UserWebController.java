@@ -21,8 +21,8 @@ import java.util.List;
 import java.util.Map;
 
 @Controller
-@PreAuthorize("hasAuthority('ADMINISTRADOR')")
-@RequestMapping("/gerenciador_de_servico/fiscais")
+@PreAuthorize("hasRole('ADMINISTRADOR')")
+@RequestMapping(RoutesController.BASE + "/fiscais")
 @RequiredArgsConstructor
 public class UserWebController {
 
