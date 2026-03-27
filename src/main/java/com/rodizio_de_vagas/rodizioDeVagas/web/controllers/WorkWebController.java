@@ -21,7 +21,7 @@ import java.security.Principal;
 import java.util.List;
 
 @Controller
-@RequestMapping("/gerenciador_de_servico/servicos")
+@RequestMapping(RoutesController.BASE + "/servicos")
 @RequiredArgsConstructor
 public class WorkWebController {
 
@@ -51,7 +51,7 @@ public class WorkWebController {
         return "fragments/services";
     }
 
-    @PreAuthorize("hasAuthority('ROLE_ADMINISTRADOR')")
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
     @PostMapping
     public String createService(@ModelAttribute RequestCreateOrUpdateWorkDTO dto, RedirectAttributes redirectAttributes) {
         try {
@@ -63,7 +63,7 @@ public class WorkWebController {
         return "redirect:/gerenciador_de_servico/servicos/disponiveis";
     }
 
-    @PreAuthorize("hasAuthority('ROLE_ADMINISTRADOR')")
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
     @PostMapping("/atualizar")
     public String updateService(@ModelAttribute RequestCreateOrUpdateWorkDTO dto, RedirectAttributes redirectAttributes) {
         try {
@@ -75,7 +75,7 @@ public class WorkWebController {
         return "redirect:/gerenciador_de_servico/servicos/disponiveis";
     }
 
-    @PreAuthorize("hasAuthority('ROLE_ADMINISTRADOR')")
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
     @PostMapping("/deletar")
     public String deleteWork(@RequestParam Long id, RedirectAttributes redirectAttrs) {
         try {

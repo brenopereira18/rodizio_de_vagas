@@ -8,6 +8,6 @@ public class LayoutController {
 
     @GetMapping("/")
     public String redirectToHome() {
-        return "redirect:/gerenciador_de_servico/servicos";
+        return "redirect:" + RoutesController.BASE + "/servicos";
     }
 }
