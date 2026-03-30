@@ -40,7 +40,6 @@ public class ProfileWebController {
             user.haveALicense()
         );
 
-        model.addAttribute("usuario", user);
         model.addAttribute("preferencias", preferences);
         model.addAttribute("categorias", Category.values());
         model.addAttribute("updateDto", dto);

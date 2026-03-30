@@ -22,7 +22,7 @@
            th:text="'Início: ' + ${#temporals.format(servico.serviceDate, 'dd/MM/yyyy  - HH:mm')}"></p>
         <p class="text-sm text-slate-600"
            th:text="'Término: ' + ${#temporals.format(servico.serviceEndDate, 'dd/MM/yyyy  - HH:mm')}"></p>
-        <p class="text-sm text-slate-600" th:text="'Supervisor: ' + ${servico.manager.fullName}"></p>
+        <p class="text-sm text-slate-600" th:text="'Supervisor: ' + ${servico.managerName}"></p>
         <p class="text-sm text-slate-600" th:text="'Categoria: ' + ${servico.category.category}"></p>
         <p class="text-sm text-slate-600" th:text="'Número de vagas: ' + ${servico.numberOfVacancies}"></p>
         <!-- Exibir observação se existir -->

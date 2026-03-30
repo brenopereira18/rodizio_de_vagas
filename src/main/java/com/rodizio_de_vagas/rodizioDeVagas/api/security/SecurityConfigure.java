@@ -32,10 +32,17 @@ public class SecurityConfigure {
                 .contentTypeOptions(Customizer.withDefaults())
                 .xssProtection(Customizer.withDefaults())
             )
-            .authorizeHttpRequests(authorize -> authorize
-                .requestMatchers("/css/**", "/js/**", "/images/**").permitAll()
-                .requestMatchers("/gerenciador_de_servico/fiscal/login", "/gerenciador_de_servico/recuperar-senha", "/gerenciador_de_servico/resetar-senha").permitAll()
-                .requestMatchers(HttpMethod.POST, "/gerenciador_de_servico/auth/login").permitAll()
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers(
+                    "/css/**",
+                    "/js/**",
+                    "/images/**",
+                    "/favicon.ico",
+                    "/gerenciador_de_servico/fiscal/login",
+                    "/gerenciador_de_servico/recuperar-senha",
+                    "/gerenciador_de_servico/resetar-senha/**"
+                ).permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
                 .anyRequest().authenticated()
             ).formLogin(form -> form
                 .loginPage("/gerenciador_de_servico/fiscal/login")

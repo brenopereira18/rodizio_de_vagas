@@ -15,7 +15,7 @@ import java.nio.file.AccessDeniedException;
 import java.security.Principal;
 
 @Controller
-@RequestMapping(RoutesController.BASE + "servicos")
+@RequestMapping(RoutesController.BASE + "/servicos")
 @RequiredArgsConstructor
 public class EnrollmentWebController {
 
