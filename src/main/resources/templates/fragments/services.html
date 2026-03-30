@@ -7,9 +7,9 @@
         <h1 class="text-lg font-bold text-slate-700 md:text-2xl">
             <span th:if="${#lists.isEmpty(servicos)}">Nenhum serviço ativo</span>
             <span th:if="${!#lists.isEmpty(servicos)}"
-                  th:text="${filtro == 'INSCRITOS'} ? 'Meus Serviços' : 'Serviços Ativos'">Serviços</span>
+                  th:text="${filtro.name() == 'INSCRITOS'} ? 'Meus Serviços' : 'Serviços Ativos'">Serviços</span>
         </h1>
-        <button th:if="${usuario.userRole.name() == 'ADMINISTRADOR'}" type="button"
+        <button th:if="${usuario.userRole().name() == 'ADMINISTRADOR'}" type="button"
                 onclick="document.getElementById('modal-servico').classList.remove('hidden')"
                 class="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded shadow text-xs md:text-sm">
             + Novo Serviço
@@ -21,15 +21,15 @@
         <label for="filter" class="text-sm font-medium text-slate-700 mr-2">Filtrar:</label>
         <select name="filter" id="filter" onchange="this.form.submit()"
                 class="border border-slate-300 rounded px-2 py-1 text-sm">
-            <option value="DISPONIVEIS" th:selected="${filtro == 'DISPONIVEIS'}">Disponíveis</option>
-            <option th:if="${usuario.userRole.name() == 'FISCAL'}" value="INSCRITOS"
-                    th:selected="${filtro == 'INSCRITOS'}">Inscritos
+            <option value="DISPONIVEIS" th:selected="${filtro.name() == 'DISPONIVEIS'}">Disponíveis</option>
+            <option th:if="${usuario.userRole().name() == 'FISCAL'}" value="INSCRITOS"
+                    th:selected="${filtro.name() == 'INSCRITOS'}">Inscritos
             </option>
-            <option value="FREE" th:selected="${filtro == 'FREE'}">Serviços Abertos</option>
+            <option value="FREE" th:selected="${filtro.name() == 'FREE'}">Serviços Abertos</option>
         </select>
     </form>
 
-    <div th:if="${usuario.userRole.name() == 'FISCAL' && filtro == 'DISPONIVEIS' && freeServicesCount > 0}"
+    <div th:if="${usuario.userRole().name() == 'FISCAL' && filtro.name() == 'DISPONIVEIS' && freeServicesCount > 0}"
          class="mb-4 p-2 bg-blue-50 border-l-4 border-blue-400 rounded">
         <div class="flex items-center">
             <div class="flex-shrink-0">
@@ -56,40 +56,40 @@
     <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-4">
         <div th:each="servico : ${servicos}"
              class="bg-slate-200 p-6 rounded-2xl shadow-lg border border-slate-300 hover:shadow-xl transition-shadow duration-300 ease-in-out flex flex-col justify-between h-full">
-            <h2 class="text-base md:text-lg font-semibold text-slate-800" th:text="${servico.work.title}">Nome do
+            <h2 class="text-base md:text-lg font-semibold text-slate-800" th:text="${servico.title}">Nome do
                 Serviço</h2>
-            <p class="text-sm text-slate-600" th:text="'Local: ' + ${servico.work.location}"></p>
+            <p class="text-sm text-slate-600" th:text="'Local: ' + ${servico.location}"></p>
             <p class="text-sm text-slate-600"
-               th:text="'Início: ' + ${#temporals.format(servico.work.serviceDate, 'dd/MM/yyyy  - HH:mm')}"></p>
+               th:text="'Início: ' + ${#temporals.format(servico.serviceDate, 'dd/MM/yyyy  - HH:mm')}"></p>
             <p class="text-sm text-slate-600"
-               th:text="'Término: ' + ${#temporals.format(servico.work.serviceEndDate, 'dd/MM/yyyy  - HH:mm')}"></p>
-            <p class="text-sm text-slate-600" th:text="'Supervisor: ' + ${servico.work.manager.fullName}"></p>
-            <p class="text-sm text-slate-600" th:text="'Categoria: ' + ${servico.work.category.category}"></p>
-            <p class="text-sm text-slate-600" th:text="'Vagas: ' + ${servico.work.numberOfVacancies}"></p>
+               th:text="'Término: ' + ${#temporals.format(servico.serviceEndDate, 'dd/MM/yyyy  - HH:mm')}"></p>
+            <p class="text-sm text-slate-600" th:text="'Supervisor: ' + ${servico.managerName}"></p>
+            <p class="text-sm text-slate-600" th:text="'Categoria: ' + ${servico.category.category}"></p>
+            <p class="text-sm text-slate-600" th:text="'Vagas: ' + ${servico.numberOfVacancies}"></p>
 
             <!-- Botões para Fiscal -->
-            <div th:if="${usuario.userRole.name() == 'FISCAL'}" class="mt-4">
+            <div th:if="${usuario.userRole().name() == 'FISCAL'}" class="mt-4">
 
                 <!-- Inscrever e Recusar (somente se fiscal tem prioridade e status for nulo ou WAITING) -->
                 <div th:if="${servico.canApply}" class="flex gap-2 text-xs md:text-sm">
-                    <form th:if="${servico.work.workStatus.name() == 'FREE'}"
-                          th:action="@{'/inscricoes/servicos/free/inscrever/' + ${servico.work.id}}"
+                    <form th:if="${servico.workStatus.name() == 'FREE'}"
+                          th:action="@{/gerenciador_de_servico/servicos/free/{id}/inscrever(id=${servico.workId})}"
                           method="post">
                         <button type="submit" class="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded">
                             Inscrever-se
                         </button>
                     </form>
 
-                    <form th:if="${servico.work.workStatus.name() != 'FREE'}"
-                          th:action="@{'/inscricoes/inscrever/' + ${servico.work.id}}"
+                    <form th:if="${servico.workStatus.name() != 'FREE'}"
+                          th:action="@{/gerenciador_de_servico/servicos/{id}/inscrever(id=${servico.workId})}"
                           method="post">
                         <button type="submit" class="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded">
                             Inscrever-se
                         </button>
                     </form>
 
-                    <form th:if="${servico.work.workStatus.name() != 'FREE'}"
-                          th:action="@{'/inscricoes/recusar/' + ${servico.work.id}}" method="post">
+                    <form th:if="${servico.workStatus.name() != 'FREE'}"
+                          th:action="@{/gerenciador_de_servico/servicos/{id}/recusar(id=${servico.workId})}" method="post">
                         <button type="submit" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded">
                             Recusar
                         </button>
@@ -97,15 +97,15 @@
                 </div>
 
                 <!-- Mensagem para fiscais que ainda não têm prioridade -->
-                <div th:if="${!servico.hasPriority and (servico.enrollment == null or servico.enrollment.subscriptionStatus.name() == 'WAITING')}"
+                <div th:if="${!servico.hasPriority and and servico.subscriptionStatus == null or servico.subscriptionStatus.name() == 'WAITING'}"
                      class="text-sm text-yellow-700 mt-2">
                     Não está disponível para você no momento
                 </div>
 
                 <!-- Cancelar inscrição (se já estiver aceito) -->
-                <div th:if="${servico.enrollment != null and servico.enrollment.subscriptionStatus.name() == 'ACCEPTED'}"
+                <div th:if="${servico.subscriptionStatus != null and servico.subscriptionStatus.name() == 'ACCEPTED'}"
                      class="text-xs md:text-sm">
-                    <form th:action="@{'/inscricoes/cancelar/' + ${servico.enrollment.id}}" method="post">
+                    <form th:action="@{/gerenciador_de_servico/servicos/{id}/cancelar(id=${servico.enrollmentId})}" method="post">
                         <button type="submit" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded">
                             Cancelar inscrição
                         </button>
@@ -113,7 +113,7 @@
                 </div>
 
                 <!-- Se já recusou -->
-                <div th:if="${servico.enrollment != null and servico.enrollment.subscriptionStatus.name() == 'REFUSED'}"
+                <div th:if="${servico.subscriptionStatus != null and servico.subscriptionStatus.name() == 'REFUSED'}"
                      class="text-red-600 text-sm">
                     Você recusou este serviço
                 </div>
@@ -121,25 +121,25 @@
             </div>
 
             <!-- Botões para Administrador -->
-            <div th:if="${usuario.userRole.name() == 'ADMINISTRADOR'}" class="mt-4 flex gap-2 text-xs md:text-sm">
+            <div th:if="${usuario.userRole().name() == 'ADMINISTRADOR'}" class="mt-4 flex gap-2 text-xs md:text-sm">
                 <button
                         type="button"
                         class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded"
-                        th:data-id="${servico.work.id}"
-                        th:data-title="${servico.work.title}"
-                        th:data-location="${servico.work.location}"
-                        th:data-servicedate="${#temporals.format(servico.work.serviceDate, 'yyyy-MM-dd''T''HH:mm')}"
-                        th:data-serviceenddate="${#temporals.format(servico.work.serviceEndDate, 'yyyy-MM-dd''T''HH:mm')}"
-                        th:data-managerid="${servico.work.manager.id}"
-                        th:data-category="${servico.work.category.name()}"
-                        th:data-vacancies="${servico.work.numberOfVacancies}"
+                        th:data-id="${servico.workId}"
+                        th:data-title="${servico.title}"
+                        th:data-location="${servico.location}"
+                        th:data-servicedate="${#temporals.format(servico.serviceDate, 'yyyy-MM-dd''T''HH:mm')}"
+                        th:data-serviceenddate="${#temporals.format(servico.serviceEndDate, 'yyyy-MM-dd''T''HH:mm')}"
+                        th:data-managerid="${servico.managerId}"
+                        th:data-category="${servico.category.name()}"
+                        th:data-vacancies="${servico.numberOfVacancies}"
                         onclick="abrirModalEdicaoComDataset(this)">
                     Editar
                 </button>
 
                 <form th:action="@{/gerenciador_de_servico/servicos/deletar}" method="post"
                       onsubmit="return confirm('Tem certeza que deseja excluir este serviço?');">
-                    <input type="hidden" name="id" th:value="${servico.work.id}"/>
+                    <input type="hidden" name="id" th:value="${servico.workId}"/>
                     <button type="submit" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded">Excluir
                     </button>
                 </form>
@@ -169,8 +169,8 @@
                 <select name="managerId" required class="border border-slate-300 rounded px-2 py-1 w-full">
                     <option value="">Selecione um supervisor</option>
                     <option th:each="supervisor : ${supervisores}"
-                            th:value="${supervisor.id}"
-                            th:text="${supervisor.fullName}"></option>
+                            th:value="${supervisor.id()}"
+                            th:text="${supervisor.fullName()}"></option>
                 </select>
                 <select name="category" required class="border border-slate-300 rounded px-2 py-1 w-full">
                     <option value="">Selecione uma categoria</option>
@@ -219,8 +219,8 @@
                 <select name="managerId" id="edit-managerId" required
                         class="border border-slate-300 rounded px-2 py-1 w-full">
                     <option th:each="supervisor : ${supervisores}"
-                            th:value="${supervisor.id}"
-                            th:text="${supervisor.fullName}"></option>
+                            th:value="${supervisor.id()}"
+                            th:text="${supervisor.fullName()}"></option>
                 </select>
                 <select name="category" id="edit-category" required
                         class="border border-slate-300 rounded px-2 py-1 w-full">

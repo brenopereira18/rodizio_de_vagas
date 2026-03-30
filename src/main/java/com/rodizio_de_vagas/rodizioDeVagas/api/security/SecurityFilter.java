@@ -35,12 +35,15 @@ public class SecurityFilter extends OncePerRequestFilter {
                 if (login != null) {
                     userRepository.findByRegistration(login)
                         .ifPresent(user -> {
-                            var authentication = new UsernamePasswordAuthenticationToken(
-                                user,
-                                null,
-                                user.getAuthorities()
-                            );
-                            SecurityContextHolder.getContext().setAuthentication(authentication);
+
+                            if (SecurityContextHolder.getContext().getAuthentication() == null) {
+                                var authentication = new UsernamePasswordAuthenticationToken(
+                                    user,
+                                    null,
+                                    user.getAuthorities()
+                                );
+                                SecurityContextHolder.getContext().setAuthentication(authentication);
+                            }
                         });
                 }
             } catch (Exception ex) {
@@ -48,6 +51,17 @@ public class SecurityFilter extends OncePerRequestFilter {
             }
         }
         filterChain.doFilter(request, response);
+    }
+
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        String path = request.getRequestURI();
+
+        return path.startsWith("/gerenciador_de_servico") ||
+            path.startsWith("/css/") ||
+            path.startsWith("/js/") ||
+            path.startsWith("/images/") ||
+            path.equals("/favicon.ico");
     }
 
     private String recoverToken(HttpServletRequest request) {

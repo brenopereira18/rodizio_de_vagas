@@ -8,7 +8,6 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@700&display=swap" rel="stylesheet">
-    <script th:src="@{/js/ajax-content.js}" defer></script>
 </head>
 <body class="text-slate-600">
 <div class="flex h-screen">
@@ -30,21 +29,21 @@
                     <span>Serviços</span>
                 </a>
             </li>
-            <li th:if="${usuario.userRole.name() == 'ADMINISTRADOR'}">
+            <li th:if="${usuario != null and usuario.userRole().name() == 'ADMINISTRADOR'}">
                 <a th:href="@{/gerenciador_de_servico/fiscais}"
                    class="flex items-center w-full py-2 px-4 rounded-md hover:bg-emerald-400">
                     <img th:src="@{/images/users.svg}" alt="Ícone" class="mr-2">
                     <span>Fiscais/Supervisores</span>
                 </a>
             </li>
-            <li th:if="${usuario.userRole.name() == 'ADMINISTRADOR'}">
+            <li th:if="${usuario != null and usuario.userRole().name() == 'ADMINISTRADOR'}">
                 <a th:href="@{/gerenciador_de_servico/fila-de-prioridade}"
                    class="flex items-center w-full py-2 px-4 rounded-md hover:bg-emerald-400">
                     <img th:src="@{/images/list.svg}" alt="Ícone" class="mr-2">
                     <span>Fila de prioridade</span>
                 </a>
             </li>
-            <li th:if="${usuario.userRole.name() == 'ADMINISTRADOR' or usuario.userRole.name() == 'SUPERVISOR'}">
+            <li th:if="${usuario != null and (usuario.userRole().name() == 'ADMINISTRADOR' or usuario.userRole().name() == 'SUPERVISOR')}">
                 <a th:href="@{/gerenciador_de_servico/inscricoes}"
                    class="flex items-center w-full py-2 px-4 rounded-md hover:bg-emerald-400">
                     <img th:src="@{/images/inscricoes.svg}" alt="Ícone" class="mr-2">

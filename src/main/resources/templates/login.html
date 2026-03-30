@@ -12,7 +12,9 @@
         <img class="w-full mb-8" th:src="@{/images/logo-prefeitura.png}" alt="Logo da prefeitura">
         <div class="bg-white rounded-lg shadow-md p-6">
             <h2 class="text-2xl font-bold text-gray-900 mb-4">Login</h2>
-            <form th:action="@{/fiscal/login}" method="post" class="flex flex-col">
+            <form th:action="@{/gerenciador_de_servico/fiscal/login}" method="post" class="flex flex-col">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+
                 <div class="flex flex-col w-full">
                     <label for="matricula" class="text-sm text-slate-700 ">Matrícula</label>
                     <input type="text" name="matricula" id="matricula"

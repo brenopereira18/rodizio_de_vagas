@@ -29,8 +29,8 @@ public class ForgetPasswordTokenService {
     private final WhatsappNotificationService whatsappNotificationService;
     private final PasswordEncoder passwordEncoder;
 
-    @Value("${app.url}")
-    private String appUrl;
+    // @Value("${app.url}")
+    private String appUrl = "/localhost:8080";
 
     @Transactional
     public void createPasswordResetTokenForFiscal(String phoneNumber) {

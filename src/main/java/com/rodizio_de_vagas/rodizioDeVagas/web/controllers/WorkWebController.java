@@ -47,7 +47,6 @@ public class WorkWebController {
         model.addAttribute("WAITING", SubscriptionStatus.WAITING);
         model.addAttribute("FREE", WorkStatus.FREE);
         model.addAttribute("freeServicesCount", workService.countFreeWorksForUser(user.registration()));
-        model.addAttribute("usuario", user);
         return "fragments/services";
     }
 
