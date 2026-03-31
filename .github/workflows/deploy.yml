@@ -1,0 +1,56 @@
+name: Gerenciador de Servico - Deploy
+
+on:
+    push:
+        branches: [main]
+
+jobs:
+    build:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v3
+
+            - name: Setup Java
+              uses: actions/setup-java@v3
+              with:
+                  distribution: temurin
+                  java-version: 21
+
+            - name: Build project
+              run: mvn clean install -DskipTests
+
+            - name: Login Docker Hub
+              run: docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
+
+            - name: Build docker image
+              run: docker build -t ${{ secrets.DOCKER_USERNAME }}/rodizio_de_vagas .
+
+            - name: Publish image
+              run: docker push ${{ secrets.DOCKER_USERNAME }}/rodizio_de_vagas
+
+    deploy:
+        needs: build
+        runs-on: self-hosted
+        steps:
+            - name: Pull image Docker Hub
+              run: docker pull ${{ secrets.DOCKER_USERNAME }}/rodizio_de_vagas:latest
+
+            - name: Remove container antigo
+              run: docker rm -f gerenciador_de_servico_app || true
+
+            - name: Subir novo container
+              run: |
+                  docker run -d \
+                    -p 8081:8080 \
+                    --name gerenciador_de_servico_app \
+                    --network gerenciador_de_servico_default \
+                    -e SPRING_PROFILES_ACTIVE=prod \
+                    -e DB_URL=${{ secrets.GERENCIADOR_DB_URL }} \
+                    -e DB_USERNAME=${{ secrets.GERENCIADOR_DB_USERNAME }} \
+                    -e DB_PASSWORD=${{ secrets.GERENCIADOR_DB_PASSWORD }} \
+                    -e JWT_SECRET=${{ secrets.JWT_SECRET }} \
+                    -e REDIS_HOST=redis \
+                    -e REDIS_PORT=6379 \
+                    -e REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }} \
+                    ${{ secrets.DOCKER_USERNAME }}/rodizio_de_vagas:latest
