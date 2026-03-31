@@ -3,21 +3,20 @@ version: '3.8'
 services:
     postgres:
         container_name: gerenciador_de_servico_postgres
-        image: postgres
+        image: postgres:16
         ports:
-            - 5432:5432
+            - 5433:5432
         environment:
-            - POSTGRES_USER=postgres
-            - POSTGRES_PASSWORD=2001
+            - POSTGRES_USER=${DB_USERNAME}
+            - POSTGRES_PASSWORD=${DB_PASSWORD}
             - POSTGRES_DB=gerenciador_de_vagas
         volumes:
             - postgres_data:/var/lib/postgresql/data
+        restart: unless-stopped
 
     redis:
         container_name: gerenciador_de_servico_redis
         image: redis:8-alpine
-        ports:
-            - 6379:6379
         volumes:
             - redis_data:/data
             - ./redis.conf:/usr/local/etc/redis/redis.conf
@@ -29,6 +28,25 @@ services:
                     memory: 512M
                 reservations:
                     memory: 256M
+
+    app:
+        container_name: gerenciador_de_servico_app
+        image: devbrenopereira/rodizio_de_vagas:latest
+        ports:
+            - 8081:8080
+        environment:
+            - SPRING_PROFILES_ACTIVE=prod
+            - DB_URL=jdbc:postgresql://postgres:5432/gerenciador_de_vagas
+            - DB_USERNAME=${DB_USERNAME}
+            - DB_PASSWORD=${DB_PASSWORD}
+            - JWT_SECRET=${JWT_SECRET}
+            - REDIS_HOST=redis
+            - REDIS_PORT=6379
+            - REDIS_PASSWORD=${REDIS_PASSWORD}
+        depends_on:
+            - postgres
+            - redis
+        restart: unless-stopped
 
 volumes:
     postgres_data:
