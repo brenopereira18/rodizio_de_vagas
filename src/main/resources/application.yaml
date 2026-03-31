@@ -1,0 +1,23 @@
+spring:
+    application:
+        name: rodizioDeVagas
+    jackson:
+        time-zone: America/Sao_Paulo
+    thymeleaf:
+        cache: true
+
+app:
+    redis:
+        stream:
+            fiscal-events: fiscal-events
+        consumer:
+            group: queue-service
+            instance: instance-1
+    events:
+        processing:
+            batch-size: 10
+            timeout: 3000
+
+
+
+
