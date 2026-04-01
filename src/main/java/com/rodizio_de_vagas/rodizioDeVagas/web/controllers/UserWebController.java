@@ -22,7 +22,7 @@ import java.util.Map;
 
 @Controller
 @PreAuthorize("hasRole('ADMINISTRADOR')")
-@RequestMapping(RoutesController.BASE + "/fiscais")
+@RequestMapping("/fiscais")
 @RequiredArgsConstructor
 public class UserWebController {
 

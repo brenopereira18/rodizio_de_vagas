@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 @Controller
-@RequestMapping(RoutesController.BASE + "/fiscal")
+@RequestMapping("/fiscal")
 public class LoginController {
 
     @GetMapping("/login")

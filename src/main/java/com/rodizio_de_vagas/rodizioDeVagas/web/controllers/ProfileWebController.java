@@ -17,7 +17,7 @@ import java.security.Principal;
 import java.util.List;
 
 @Controller
-@RequestMapping(RoutesController.BASE + "/perfil")
+@RequestMapping("/perfil")
 @RequiredArgsConstructor
 @PreAuthorize("isAuthenticated()")
 public class ProfileWebController {

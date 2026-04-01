@@ -14,7 +14,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.util.List;
 
 @Controller
-@RequestMapping(RoutesController.BASE + "/inscricoes")
+@RequestMapping("/inscricoes")
 @PreAuthorize("hasRole('ADMINISTRADOR') or hasRole('SUPERVISOR')")
 @RequiredArgsConstructor
 public class RegistrationWebController {

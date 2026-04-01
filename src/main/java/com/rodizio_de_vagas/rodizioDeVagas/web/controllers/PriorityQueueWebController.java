@@ -15,7 +15,7 @@ import java.util.Map;
 
 @Controller
 @PreAuthorize("hasRole('ADMINISTRADOR')")
-@RequestMapping(RoutesController.BASE + "/fila-de-prioridade")
+@RequestMapping("/fila-de-prioridade")
 @RequiredArgsConstructor
 public class PriorityQueueWebController {
 
