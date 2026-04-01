@@ -17,7 +17,7 @@
     </div>
 
     <!-- Filtro -->
-    <form method="get" th:action="@{/gerenciador_de_servico/servicos/disponiveis}" class="mb-6">
+    <form method="get" th:action="@{/servicos/disponiveis}" class="mb-6">
         <label for="filter" class="text-sm font-medium text-slate-700 mr-2">Filtrar:</label>
         <select name="filter" id="filter" onchange="this.form.submit()"
                 class="border border-slate-300 rounded px-2 py-1 text-sm">
@@ -73,7 +73,7 @@
                 <!-- Inscrever e Recusar (somente se fiscal tem prioridade e status for nulo ou WAITING) -->
                 <div th:if="${servico.canApply}" class="flex gap-2 text-xs md:text-sm">
                     <form th:if="${servico.workStatus.name() == 'FREE'}"
-                          th:action="@{/gerenciador_de_servico/servicos/free/{id}/inscrever(id=${servico.workId})}"
+                          th:action="@{/servicos/free/{id}/inscrever(id=${servico.workId})}"
                           method="post">
                         <button type="submit" class="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded">
                             Inscrever-se
@@ -81,7 +81,7 @@
                     </form>
 
                     <form th:if="${servico.workStatus.name() != 'FREE'}"
-                          th:action="@{/gerenciador_de_servico/servicos/{id}/inscrever(id=${servico.workId})}"
+                          th:action="@{/servicos/{id}/inscrever(id=${servico.workId})}"
                           method="post">
                         <button type="submit" class="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded">
                             Inscrever-se
@@ -89,7 +89,7 @@
                     </form>
 
                     <form th:if="${servico.workStatus.name() != 'FREE'}"
-                          th:action="@{/gerenciador_de_servico/servicos/{id}/recusar(id=${servico.workId})}" method="post">
+                          th:action="@{/servicos/{id}/recusar(id=${servico.workId})}" method="post">
                         <button type="submit" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded">
                             Recusar
                         </button>
@@ -105,7 +105,7 @@
                 <!-- Cancelar inscrição (se já estiver aceito) -->
                 <div th:if="${servico.subscriptionStatus != null and servico.subscriptionStatus.name() == 'ACCEPTED'}"
                      class="text-xs md:text-sm">
-                    <form th:action="@{/gerenciador_de_servico/servicos/{id}/cancelar(id=${servico.enrollmentId})}" method="post">
+                    <form th:action="@{/servicos/{id}/cancelar(id=${servico.enrollmentId})}" method="post">
                         <button type="submit" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded">
                             Cancelar inscrição
                         </button>
@@ -137,7 +137,7 @@
                     Editar
                 </button>
 
-                <form th:action="@{/gerenciador_de_servico/servicos/deletar}" method="post"
+                <form th:action="@{/servicos/deletar}" method="post"
                       onsubmit="return confirm('Tem certeza que deseja excluir este serviço?');">
                     <input type="hidden" name="id" th:value="${servico.workId}"/>
                     <button type="submit" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded">Excluir
@@ -151,7 +151,7 @@
     <div id="modal-servico" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
         <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-md mx-4">
             <h2 class="text-lg md:text-xl font-bold mb-4">Novo Serviço</h2>
-            <form th:action="@{/gerenciador_de_servico/servicos}" method="post" class="flex flex-col gap-4 text-sm">
+            <form th:action="@{/servicos}" method="post" class="flex flex-col gap-4 text-sm">
                 <input type="text" name="title" placeholder="Título" required
                        class="border border-slate-300 rounded px-2 py-1 w-full"/>
                 <input type="text" name="location" placeholder="Local" required
@@ -199,7 +199,7 @@
          class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
         <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-md mx-4">
             <h2 class="text-lg md:text-xl font-bold mb-4">Editar Serviço</h2>
-            <form id="form-editar-servico" th:action="@{/gerenciador_de_servico/servicos/atualizar}" method="post"
+            <form id="form-editar-servico" th:action="@{/servicos/atualizar}" method="post"
                   class="flex flex-col gap-4">
                 <input type="hidden" name="id" id="edit-id"/>
                 <input type="text" name="title" id="edit-title" placeholder="Título" required

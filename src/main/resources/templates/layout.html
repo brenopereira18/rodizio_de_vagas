@@ -23,35 +23,35 @@
         <img class="mb-10 mt-16 lg:mt-0 w-48 md:w-56" th:src="@{/images/logo.png}" alt="Logo da prefeitura">
         <ul class="text-sm md:text-base">
             <li>
-                <a th:href="@{/gerenciador_de_servico/servicos}"
+                <a th:href="@{/servicos}"
                    class="flex items-center w-full py-2 px-4 rounded-md hover:bg-emerald-400">
                     <img th:src="@{/images/servico.svg}" alt="Ícone" class="mr-2">
                     <span>Serviços</span>
                 </a>
             </li>
             <li th:if="${usuario != null and usuario.userRole().name() == 'ADMINISTRADOR'}">
-                <a th:href="@{/gerenciador_de_servico/fiscais}"
+                <a th:href="@{/fiscais}"
                    class="flex items-center w-full py-2 px-4 rounded-md hover:bg-emerald-400">
                     <img th:src="@{/images/users.svg}" alt="Ícone" class="mr-2">
                     <span>Fiscais/Supervisores</span>
                 </a>
             </li>
             <li th:if="${usuario != null and usuario.userRole().name() == 'ADMINISTRADOR'}">
-                <a th:href="@{/gerenciador_de_servico/fila-de-prioridade}"
+                <a th:href="@{/fila-de-prioridade}"
                    class="flex items-center w-full py-2 px-4 rounded-md hover:bg-emerald-400">
                     <img th:src="@{/images/list.svg}" alt="Ícone" class="mr-2">
                     <span>Fila de prioridade</span>
                 </a>
             </li>
             <li th:if="${usuario != null and (usuario.userRole().name() == 'ADMINISTRADOR' or usuario.userRole().name() == 'SUPERVISOR')}">
-                <a th:href="@{/gerenciador_de_servico/inscricoes}"
+                <a th:href="@{/inscricoes}"
                    class="flex items-center w-full py-2 px-4 rounded-md hover:bg-emerald-400">
                     <img th:src="@{/images/inscricoes.svg}" alt="Ícone" class="mr-2">
                     <span>Inscrições</span>
                 </a>
             </li>
             <li>
-                <a th:href="@{/gerenciador_de_servico/perfil}"
+                <a th:href="@{/perfil}"
                    class="flex items-center w-full py-2 px-4 rounded-md hover:bg-emerald-400">
                     <img th:src="@{/images/user.svg}" alt="Ícone" class="mr-2">
                     <span>Meu Perfil</span>

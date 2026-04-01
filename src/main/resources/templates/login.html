@@ -12,7 +12,7 @@
         <img class="w-full mb-8" th:src="@{/images/logo-prefeitura.png}" alt="Logo da prefeitura">
         <div class="bg-white rounded-lg shadow-md p-6">
             <h2 class="text-2xl font-bold text-gray-900 mb-4">Login</h2>
-            <form th:action="@{/gerenciador_de_servico/fiscal/login}" method="post" class="flex flex-col">
+            <form th:action="@{/fiscal/login}" method="post" class="flex flex-col">
                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
 
                 <div class="flex flex-col w-full">
@@ -29,7 +29,7 @@
                 <p class="text-red-400 text-xs mt-1" th:if="${error}" th:text="${error}"></p>
                 <button type="submit" class="bg-gradient-to-r from-indigo-500 to-blue-500 text-white font-bold py-2 px-4 rounded-md mt-4 hover:bg-indigo-600 hover:to-blue-600 transition ease-in-out duration-150">Login</button>
                 <div class="mt-4 text-center">
-                    <a th:href="@{/gerenciador_de_servico/recuperar-senha}" class="text-sm text-blue-600 hover:underline">Esqueci minha senha?</a>
+                    <a th:href="@{/recuperar-senha}" class="text-sm text-blue-600 hover:underline">Esqueci minha senha?</a>
                 </div>
             </form>
         </div>
