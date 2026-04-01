@@ -21,7 +21,7 @@ import java.security.Principal;
 import java.util.List;
 
 @Controller
-@RequestMapping(RoutesController.BASE + "/servicos")
+@RequestMapping("/servicos")
 @RequiredArgsConstructor
 public class WorkWebController {
 
