@@ -45,6 +45,13 @@ public class RedisEventConsumer {
     @PostConstruct
     public void initializeConsumerGroup() {
         try {
+            // Cria o stream se não existir
+            Boolean streamExists = redisTemplate.hasKey(streamName);
+            if (Boolean.FALSE.equals(streamExists)) {
+                redisTemplate.opsForStream().add(streamName, Map.of("init", "true"));
+                log.info("Stream criado: {}", streamName);
+            }
+
             // Criar consumer group se não existir
             redisTemplate.opsForStream()
                 .createGroup(streamName, ReadOffset.from("0"), consumerGroup);
