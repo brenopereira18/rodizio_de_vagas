@@ -1,7 +1,6 @@
 package com.rodizio_de_vagas.rodizioDeVagas.api.security;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -10,7 +9,6 @@ import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -38,19 +36,19 @@ public class SecurityConfigure {
                     "/js/**",
                     "/images/**",
                     "/favicon.ico",
-                    "/gerenciador_de_servico/fiscal/login",
-                    "/gerenciador_de_servico/recuperar-senha",
-                    "/gerenciador_de_servico/resetar-senha/**"
+                    "/fiscal/login",
+                    "/recuperar-senha",
+                    "/resetar-senha/**"
                 ).permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
                 .anyRequest().authenticated()
             ).formLogin(form -> form
-                .loginPage("/gerenciador_de_servico/fiscal/login")
-                .loginProcessingUrl("/gerenciador_de_servico/fiscal/login")
+                .loginPage("/fiscal/login")
+                .loginProcessingUrl("/fiscal/login")
                 .usernameParameter("matricula")
                 .passwordParameter("senha")
-                .defaultSuccessUrl("/gerenciador_de_servico/servicos", true)
-                .failureUrl("/gerenciador_de_servico/fiscal/login?error=true")
+                .defaultSuccessUrl("/servicos", true)
+                .failureUrl("/fiscal/login?error=true")
                 .permitAll()
             )
             .sessionManagement(session -> session
@@ -58,8 +56,8 @@ public class SecurityConfigure {
                 .maximumSessions(1)
             )
             //.logout(logout -> logout
-              //  .logoutUrl("/gerenciador_de_servico/logout")
-              //  .logoutSuccessUrl("/gerenciador_de_servico/fiscal/login?logout=true")
+              //  .logoutUrl("/logout")
+              //  .logoutSuccessUrl("/fiscal/login?logout=true")
               //  .invalidateHttpSession(true)
               //  .deleteCookies("JSESSIONID")
             //)
