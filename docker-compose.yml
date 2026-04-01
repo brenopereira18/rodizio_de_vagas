@@ -20,7 +20,7 @@ services:
         volumes:
             - redis_data:/data
             - ./redis.conf:/usr/local/etc/redis/redis.conf
-        command: redis-server /usr/local/etc/redis/redis.conf
+        command: redis-server /usr/local/etc/redis/redis.conf --requirepass ${REDIS_PASSWORD}
         restart: unless-stopped
         deploy:
             resources:
