@@ -25,16 +25,16 @@ import java.time.Duration;
 @Slf4j
 public class RedisConfig {
 
-    @Value("${spring.redis.host}")
+    @Value("${spring.data.redis.host}")
     private String redisHost;
 
-    @Value("${spring.redis.port}")
+    @Value("${spring.data.redis.port}")
     private int redisPort;
 
-    @Value("${spring.redis.password}")
+    @Value("${spring.data.redis.password}")
     private String redisPassword;
 
-    @Value("${spring.redis.timeout:5000}")
+    @Value("${spring.data.redis.timeout:5000}")
     private long redisTimeout;
 
     @PostConstruct
