@@ -38,4 +38,7 @@ logging:
         root: WARN
         com.rodizio_de_vagas: INFO
 
-
+server:
+    port: 8080
+    servlet:
+        context-path: /gerenciador_de_servico
