@@ -50,6 +50,6 @@ public class GlobalExceptionHandler {
 
         model.addAttribute("error", "Ocorreu um erro inesperado. Tente novamente mais tarde.");
         model.addAttribute("tokenPresent", false);
-        return "redirect:/gerenciador_de_servico/servicos";
+        return "redirect:/servicos";
     }
 }

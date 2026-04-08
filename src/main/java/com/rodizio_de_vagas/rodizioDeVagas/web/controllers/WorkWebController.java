@@ -30,7 +30,7 @@ public class WorkWebController {
 
     @GetMapping
     public String redirectToDisponiveis() {
-        return "redirect:/gerenciador_de_servico/servicos/disponiveis";
+        return "redirect:/servicos/disponiveis";
     }
 
     @GetMapping("/disponiveis")
@@ -59,7 +59,7 @@ public class WorkWebController {
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", "Erro ao criar serviço: " + e.getMessage());
         }
-        return "redirect:/gerenciador_de_servico/servicos/disponiveis";
+        return "redirect:/servicos/disponiveis";
     }
 
     @PreAuthorize("hasRole('ADMINISTRADOR')")
@@ -71,7 +71,7 @@ public class WorkWebController {
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", "Erro ao atualizar serviço: " + e.getMessage());
         }
-        return "redirect:/gerenciador_de_servico/servicos/disponiveis";
+        return "redirect:/servicos/disponiveis";
     }
 
     @PreAuthorize("hasRole('ADMINISTRADOR')")
@@ -83,7 +83,7 @@ public class WorkWebController {
         } catch (ResourceNotFoundException e) {
             redirectAttrs.addFlashAttribute("error", e.getMessage());
         }
-        return "redirect:/gerenciador_de_servico/servicos/disponiveis";
+        return "redirect:/servicos/disponiveis";
     }
 
 }

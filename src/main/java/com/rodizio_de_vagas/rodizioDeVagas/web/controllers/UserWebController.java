@@ -49,7 +49,7 @@ public class UserWebController {
         } catch (EntityAlreadyExistsException e) {
             redirectAttributes.addFlashAttribute("error", e.getMessage());
         }
-        return "redirect:/gerenciador_de_servico/fiscais";
+        return "redirect:/fiscais";
     }
 
     @PostMapping("/deletar")
@@ -60,6 +60,6 @@ public class UserWebController {
         } catch (ResourceNotFoundException | IllegalStateException e) {
             redirectAttrs.addFlashAttribute("error", e.getMessage());
         }
-        return "redirect:/gerenciador_de_servico/fiscais";
+        return "redirect:/fiscais";
     }
 }
