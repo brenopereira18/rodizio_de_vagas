@@ -10,6 +10,7 @@ import com.rodizio_de_vagas.rodizioDeVagas.api.modules.user.entity.UserRole;
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.user.repository.UserRepository;
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.work.entity.Category;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,6 +18,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class WorkCategoryPreferenceService {
 
     private final WorkCategoryPreferenceRepository workCategoryPreferenceRepository;
@@ -37,41 +39,71 @@ public class WorkCategoryPreferenceService {
 
     @Transactional
     public void updatePreference(String registration, Category category, boolean active) {
-        WorkCategoryPreferenceEntity preference = this.workCategoryPreferenceRepository.findByUserEntityRegistrationAndCategory(registration, category)
+        log.info("=== INÍCIO updatePreference ===");
+        log.info("Registration: {}, Category: {}, Active: {}", registration, category, active);
+
+        WorkCategoryPreferenceEntity preference = this.workCategoryPreferenceRepository
+            .findByUserEntityRegistrationAndCategory(registration, category)
             .orElseThrow(() -> new ResourceNotFoundException("Preferência não encontrada."));
 
         boolean wasActive = preference.getActive();
+        log.info("Estado anterior da preferência: wasActive={}", wasActive);
 
         preference.setActive(active);
         this.workCategoryPreferenceRepository.save(preference);
+        log.info("Preferência salva no banco com active={}", active);
 
         if (wasActive && !active) {
-            // Fiscal está desativando a categoria, remover da fila
+            log.info(">>> DESATIVANDO fiscal da categoria {}", category);
             priorityQueueService.deactivateFiscalFromCategory(registration, category);
         } else if (!wasActive && active) {
-            // Fiscal está ativando a categoria, adicionar no final da fila
+            log.info(">>> ATIVANDO fiscal na categoria {}", category);
             priorityQueueService.activateFiscalInCategory(registration, category);
+        } else {
+            log.info("--- Nenhuma mudança de estado na fila (wasActive={}, active={})", wasActive, active);
         }
+
+        log.info("=== FIM updatePreference ===");
     }
 
     @Transactional
     public void syncPreferences(String registration, List<Category> activeCategories) {
-        List<WorkCategoryPreferenceEntity> currentPreferences = workCategoryPreferenceRepository.findByUserEntityRegistration(registration);
+        log.info("=== INÍCIO syncPreferences ===");
+        log.info("Registration: {}, Categorias recebidas para ativar: {}", registration, activeCategories);
+
+        List<WorkCategoryPreferenceEntity> currentPreferences =
+            workCategoryPreferenceRepository.findByUserEntityRegistration(registration);
 
         UserEntity user = userRepository.findByRegistration(registration)
             .orElseThrow(() -> new ResourceNotFoundException("Fiscal não encontrado"));
 
+        // Validar se pode sair das filas que estão sendo desativadas
         currentPreferences.stream()
             .filter(pref -> pref.getActive() && !activeCategories.contains(pref.getCategory()))
-            .map(WorkCategoryPreferenceEntity::getCategory)
-            .forEach(category -> priorityQueueService.validateFiscalCanLeaveQueue(user.getId(), category));
+            .forEach(pref -> {
+                log.info("Validando saída da categoria: {}", pref.getCategory());
+                priorityQueueService.validateFiscalCanLeaveQueue(user.getId(), pref.getCategory());
+            });
 
+        // Atualizar cada preferência conforme necessário
         currentPreferences.forEach(preference -> {
             boolean shouldBeActive = activeCategories.contains(preference.getCategory());
-            if (!preference.getActive().equals(shouldBeActive)) {
+            boolean isCurrentlyActive = preference.getActive();
+
+            log.info("Categoria: {}, Estado atual: {}, Deveria estar: {}",
+                preference.getCategory(), isCurrentlyActive, shouldBeActive);
+
+            // Só atualiza se houver mudança de estado
+            if (isCurrentlyActive != shouldBeActive) {
+                log.info(">>> Mudança detectada para {}: {} -> {}",
+                    preference.getCategory(), isCurrentlyActive, shouldBeActive);
                 updatePreference(registration, preference.getCategory(), shouldBeActive);
+            } else {
+                log.info("--- Sem mudança para {}, ignorando", preference.getCategory());
             }
         });
+
+        log.info("=== FIM syncPreferences ===");
     }
 
     @Transactional
@@ -84,7 +116,7 @@ public class WorkCategoryPreferenceService {
             WorkCategoryPreferenceEntity preference = WorkCategoryPreferenceEntity.builder()
                 .userEntity(user)
                 .category(category)
-                .active(true)
+                .active(false)
                 .build();
             this.workCategoryPreferenceRepository.save(preference);
         }
