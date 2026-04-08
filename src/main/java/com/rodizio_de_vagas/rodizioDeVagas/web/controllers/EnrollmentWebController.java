@@ -30,7 +30,7 @@ public class EnrollmentWebController {
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", "Erro ao se inscrever: " + e.getMessage());
         }
-        return "redirect:/gerenciador_de_servico/servicos";
+        return "redirect:/servicos";
     }
 
     @PostMapping("/free/{id}/inscrever")
@@ -42,7 +42,7 @@ public class EnrollmentWebController {
             log.warn("Erro ao se inscrever em serviço livre", e);
             redirectAttributes.addFlashAttribute("error", "Erro ao se inscrever: " + e.getMessage());
         }
-        return "redirect:/gerenciador_de_servico/servicos";
+        return "redirect:/servicos";
     }
 
     @PostMapping("/{id}/recusar")
@@ -53,7 +53,7 @@ public class EnrollmentWebController {
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", "Erro ao recusar inscrição: " + e.getMessage());
         }
-        return "redirect:/gerenciador_de_servico/servicos";
+        return "redirect:/servicos";
     }
 
     @PostMapping("/{id}/cancelar")
@@ -66,7 +66,7 @@ public class EnrollmentWebController {
             redirectAttributes.addFlashAttribute("error", "Erro ao cancelar inscrição: " + e.getMessage());
         }
 
-        return "redirect:/gerenciador_de_servico/servicos?filtro=INSCRITOS";
+        return "redirect:/servicos?filtro=INSCRITOS";
     }
 
 }
