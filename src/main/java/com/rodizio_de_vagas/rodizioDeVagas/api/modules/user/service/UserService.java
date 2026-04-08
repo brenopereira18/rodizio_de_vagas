@@ -58,6 +58,7 @@ public class UserService {
             .registration(userDTO.registration())
             .phoneNumber(userDTO.phoneNumber())
             .password(encryptedPassword)
+            .email(userDTO.email())
             .haveALicense(false)
             .userRole(userDTO.userRole())
             .build();
@@ -65,11 +66,6 @@ public class UserService {
         this.userRepository.save(user);
         this.workCategoryPreferenceService.createInitialPreferencesForUser(user);
 
-        if (user.getUserRole().equals(UserRole.FISCAL)) {
-            for (Category category : Category.values()) {
-                this.priorityQueueService.activateFiscalInCategory(user.getRegistration(), category);
-            }
-        }
         return toResponseDTO(user);
     }
 
@@ -110,8 +106,10 @@ public class UserService {
                 });
             user.setPhoneNumber(dto.phoneNumber());
         }
-        if (dto.haveALicense() != null) {
-            user.setHaveALicense(dto.haveALicense());
+        user.setHaveALicense(Boolean.TRUE.equals(dto.haveALicense()));
+
+        if (dto.email() != null) {
+            user.setEmail(dto.email());
         }
 
         if (dto.password() != null && !dto.password().isBlank()) {
@@ -120,9 +118,9 @@ public class UserService {
 
         this.userRepository.save(user);
 
-        if (dto.categories() != null) {
-            this.workCategoryPreferenceService.syncPreferences(user.getRegistration(), dto.categories());
-        }
+        List<Category> categories = dto.categories() != null ? dto.categories() : List.of();
+        this.workCategoryPreferenceService.syncPreferences(registration, categories);
+
         return toResponseDTO(user);
      }
 
@@ -175,6 +173,7 @@ public class UserService {
             user.getFullName(),
             user.getRegistration(),
             user.getPhoneNumber(),
+            user.getEmail(),
             user.getHaveALicense(),
             user.getUserRole()
         );
