@@ -1,0 +1,28 @@
+services:
+    postgres:
+        container_name: gerenciador_de_servico_postgres
+        image: postgres:16
+        ports:
+            - 5432:5432
+        environment:
+            - POSTGRES_USER=postgres
+            - POSTGRES_PASSWORD=2001
+            - POSTGRES_DB=gerenciador_de_vagas
+        volumes:
+            - postgres_data:/var/lib/postgresql/data
+        restart: unless-stopped
+
+    redis:
+        container_name: gerenciador_de_servico_redis
+        image: redis:8-alpine
+        ports:
+            - 6379:6379
+        volumes:
+            - redis_data:/data
+            - ./redis.conf:/usr/local/etc/redis/redis.conf
+        command: redis-server /usr/local/etc/redis/redis.conf --requirepass redis2001
+        restart: unless-stopped
+
+volumes:
+    postgres_data:
+    redis_data:
