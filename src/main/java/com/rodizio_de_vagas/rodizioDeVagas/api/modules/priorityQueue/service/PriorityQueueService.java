@@ -8,14 +8,11 @@ import com.rodizio_de_vagas.rodizioDeVagas.api.modules.priorityQueue.entity.Prio
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.priorityQueue.entity.dto.PriorityQueueResponseDTO;
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.priorityQueue.repository.PriorityQueueRepository;
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.user.entity.UserEntity;
-import com.rodizio_de_vagas.rodizioDeVagas.api.modules.user.entity.UserRole;
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.user.repository.UserRepository;
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.work.entity.Category;
-import jakarta.annotation.PostConstruct;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -34,36 +31,6 @@ public class PriorityQueueService {
 
     private static final DateTimeFormatter DATE_FORMATTER =
         DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
-
-    /**
-     * Cria automaticamente as filas de prioridade para todas as categorias
-     * com todos os fiscais ordenados por nome.
-     */
-    @PostConstruct
-    @Transactional
-    public void initializePriorityQueues() {
-        for (Category category : Category.values()) {
-            // Verifica se a fila já foi criada
-            if (this.priorityQueueRepository.existsByCategory(category)) {
-                log.debug("Fila da categoria {} já existe. Pulando...", category);
-                continue;
-            }
-
-            List<UserEntity> users = this.userRepository.findByUserRoleOrderByFullNameAsc(UserRole.FISCAL);
-
-            List<PriorityQueueEntity> entries = new ArrayList<>();
-            for (int i = 0; i < users.size(); i++) {
-                entries.add(PriorityQueueEntity.builder()
-                    .userEntity(users.get(i))
-                    .category(category)
-                    .positionInLine(i + 1)
-                    .build());
-            }
-
-            priorityQueueRepository.saveAll(entries);
-            log.info("Fila inicializada para categoria {}: {} fiscais adicionados", category, entries.size());
-        }
-    }
 
     @Transactional
     public void deactivateFiscalFromCategory(String registration, Category category) {
