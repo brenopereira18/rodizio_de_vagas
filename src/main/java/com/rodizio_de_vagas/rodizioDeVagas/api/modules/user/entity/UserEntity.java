@@ -36,6 +36,9 @@ public class UserEntity implements UserDetails {
     @Pattern(regexp = "\\d{5}-\\d", message = "A matrícula deve estar no formato 00000-0")
     private String registration;
 
+    @Column(name = "email")
+    private String email;
+
     @JsonIgnore
     @Column(name = "senha", nullable = false)
     @NotBlank

@@ -7,6 +7,7 @@ public record ResponseUserDTO(
     String fullName,
     String registration,
     String phoneNumber,
+    String email,
     Boolean haveALicense,
     UserRole userRole
 ) {}

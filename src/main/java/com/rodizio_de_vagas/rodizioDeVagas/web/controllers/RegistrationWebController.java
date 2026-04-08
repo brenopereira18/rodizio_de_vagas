@@ -39,7 +39,7 @@ public class RegistrationWebController {
             redirectAttributes.addFlashAttribute("error", "Erro ao atualizar observação: " + e.getMessage());
         }
 
-        return "redirect:/gerenciador_de_servico/inscricoes";
+        return "redirect:/inscricoes";
     }
 }
 

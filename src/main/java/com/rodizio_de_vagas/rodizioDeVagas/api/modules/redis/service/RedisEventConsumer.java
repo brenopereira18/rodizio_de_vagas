@@ -123,10 +123,6 @@ public class RedisEventConsumer {
         } catch (Exception e) {
             log.error("ERRO ao processar evento: recordId={}, erro={}",
                 record.getId(), e.getMessage(), e);
-
-            // Acknowledge para não travar a fila.
-            // Implementar dead letter queue para reprocessamento seguro.
-            acknowledgeEvent(record);
         }
     }
 
@@ -147,6 +143,28 @@ public class RedisEventConsumer {
         } catch (Exception e) {
             log.error("Erro ao confirmar evento: recordId={}, erro={}",
                 record.getId(), e.getMessage());
+        }
+    }
+
+    @Scheduled(fixedDelay = 10000)
+    public void reprocessPendingEvents() {
+        try {
+            List<MapRecord<String, Object, Object>> records = redisTemplate
+                .opsForStream()
+                .read(
+                    Consumer.from(consumerGroup, consumerInstance),
+                    StreamReadOptions.empty().count(batchSize),
+                    StreamOffset.create(streamName, ReadOffset.from("0"))
+                );
+
+            if (records == null || records.isEmpty()) return;
+            log.info("Reprocessando {} eventos pendentes", records.size());
+
+            for (MapRecord<String, Object, Object> record : records) {
+                processEvent(record); // 👈 reutiliza seu método atual
+            }
+        } catch (Exception e) {
+            log.error("Erro ao reprocessar eventos pendentes", e);
         }
     }
 }

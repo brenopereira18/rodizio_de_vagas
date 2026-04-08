@@ -33,6 +33,7 @@ public class ProfileWebController {
         RequestUpdateUserDTO dto = new RequestUpdateUserDTO(
             null,
             user.phoneNumber(),
+            user.email(),
             preferences.stream()
                 .filter(WorkCategoryPreferenceResponseDTO::active)
                 .map(WorkCategoryPreferenceResponseDTO::category)
@@ -57,6 +58,6 @@ public class ProfileWebController {
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", "Erro ao atualizar: " + e.getMessage());
         }
-        return "redirect:/gerenciador_de_servico/perfil";
+        return "redirect:/perfil";
     }
 }
