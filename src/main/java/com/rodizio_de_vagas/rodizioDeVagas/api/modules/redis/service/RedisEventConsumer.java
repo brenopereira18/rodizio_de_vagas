@@ -1,6 +1,8 @@
 package com.rodizio_de_vagas.rodizioDeVagas.api.modules.redis.service;
 
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.priorityQueue.service.PriorityQueueService;
+import com.rodizio_de_vagas.rodizioDeVagas.api.modules.processedEvent.entity.ProcessedEventEntity;
+import com.rodizio_de_vagas.rodizioDeVagas.api.modules.processedEvent.repository.ProcessedEventRepository;
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.redis.events.TaxRefusalEvent;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
@@ -10,10 +12,8 @@ import org.springframework.data.redis.connection.stream.*;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -26,6 +26,7 @@ public class RedisEventConsumer {
 
     private final RedisTemplate<String, Object> redisTemplate;
     private final PriorityQueueService priorityQueueService;
+    private final ProcessedEventRepository processedEventRepository;
 
     @Value("${app.redis.stream.fiscal-events}")
     private String streamName;
@@ -96,6 +97,12 @@ public class RedisEventConsumer {
             log.info("Processando evento: eventId={}, fiscalId={}, categoria={}",
                 event.eventId(), event.taxId(), event.category());
 
+            if (processedEventRepository.existsById(event.eventId())) {
+                log.warn("Evento já processado: {}", event.eventId());
+                acknowledgeEvent(record);
+                return;
+            }
+
             // Verificar se fiscal ainda está na fila
             boolean fiscalInQueue = priorityQueueService.isFiscalInQueue(
                 event.taxId(), event.category()
@@ -104,6 +111,8 @@ public class RedisEventConsumer {
             if (!fiscalInQueue) {
                 log.warn("Fiscal {} não está mais na fila {}, ignorando evento {}",
                     event.taxId(), event.category(), event.eventId());
+                processedEventRepository.save(new ProcessedEventEntity(event.eventId()));
+
                 acknowledgeEvent(record);
                 return;
             }
