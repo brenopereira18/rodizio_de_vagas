@@ -2,17 +2,14 @@ package com.rodizio_de_vagas.rodizioDeVagas.api.modules.forgetPassword.service;
 
 import com.rodizio_de_vagas.rodizioDeVagas.api.exceptions.InvalidTokenException;
 import com.rodizio_de_vagas.rodizioDeVagas.api.exceptions.TokenExpiredException;
-import com.rodizio_de_vagas.rodizioDeVagas.api.exceptions.UserNotFoundForPasswordResetException;
-import com.rodizio_de_vagas.rodizioDeVagas.api.modules.evolutionAPI.service.WhatsappNotificationService;
+import com.rodizio_de_vagas.rodizioDeVagas.api.modules.email.service.EmailService;
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.forgetPassword.entity.ForgetPasswordTokenEntity;
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.forgetPassword.repository.ForgetPasswordTokenRepository;
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.user.entity.UserEntity;
 import com.rodizio_de_vagas.rodizioDeVagas.api.modules.user.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -26,16 +23,19 @@ public class ForgetPasswordTokenService {
 
     private final UserRepository userRepository;
     private final ForgetPasswordTokenRepository forgetPasswordTokenRepository;
-    private final WhatsappNotificationService whatsappNotificationService;
     private final PasswordEncoder passwordEncoder;
+    private final EmailService emailService;
 
-    // @Value("${app.url}")
-    private String appUrl = "/localhost:8080";
+    @Value("${app.base-url}")
+    private String appUrl;
 
     @Transactional
-    public void createPasswordResetTokenForFiscal(String phoneNumber) {
-        UserEntity user = userRepository.findByPhoneNumber(phoneNumber).orElseThrow(() ->
-            new UserNotFoundForPasswordResetException("Usuário não encontrado."));
+    public void createPasswordResetTokenForFiscal(String email) {
+        UserEntity user = userRepository.findByEmail(email).orElse(null);
+
+        if (user == null) {
+            return;
+        }
 
         // Gerar um novo token e definir a data de expiração
         String newTokenString = UUID.randomUUID().toString();
@@ -60,7 +60,7 @@ public class ForgetPasswordTokenService {
         String resetUrl = appUrl + "/resetar-senha?token=" + newTokenString;
         String message = "Olá, " + user.getFullName() + "! Para redefinir sua senha, clique no link: " + resetUrl + "\n\nEste link é válido por 15 minutos.";
 
-        whatsappNotificationService.sendMessage(phoneNumber, message);
+        emailService.sendEmail(user.getEmail(), "Redefinição de senha", message);
     }
 
     @Transactional
