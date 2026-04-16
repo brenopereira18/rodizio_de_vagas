@@ -24,9 +24,9 @@ public class ForgotPasswordWebController {
     }
 
     @PostMapping
-    public String processForgotPasswordForm(@RequestParam("phoneNumber") String phoneNumber, Model model) {
-        this.forgetPasswordTokenService.createPasswordResetTokenForFiscal(phoneNumber);
-        model.addAttribute("message", "Se seu telefone estiver cadastrado, você receberá um link para redefinir sua senha.");
+    public String processForgotPasswordForm(@RequestParam("email") String email, Model model) {
+        this.forgetPasswordTokenService.createPasswordResetTokenForFiscal(email);
+        model.addAttribute("message", "Se seu email estiver cadastrado, você receberá um link para redefinir sua senha.");
         model.addAttribute("tokenPresent", false);
         return "forgot-password";
     }
