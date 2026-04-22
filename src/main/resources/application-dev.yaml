@@ -37,6 +37,9 @@ spring:
                     starttls:
                         enable: true
 
+app:
+    base-url: https://dmfurb.pjf.mg.gov.br/servico_extraordinario
+
 security:
     token:
         secret: GERENCIADOR_DE_VAGAS#
