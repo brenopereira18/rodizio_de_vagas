@@ -35,6 +35,9 @@ spring:
                     starttls:
                         enable: true
 
+app:
+    base-url: ${APP_BASE_URL}
+
 security:
     token:
         secret: ${JWT_SECRET}

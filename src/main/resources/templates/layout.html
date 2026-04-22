@@ -20,6 +20,8 @@
     <!-- Sidebar -->
     <nav id="sidebar"
          class="fixed lg:static top-0 left-0 h-full w-60 lg:w-64 bg-slate-200 p-4 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out z-40 shadow-lg border-r border-slate-300">
+
+
         <img class="mb-10 mt-16 lg:mt-0 w-48 md:w-56" th:src="@{/images/logo.png}" alt="Logo da prefeitura">
         <ul class="text-sm md:text-base">
             <li>
@@ -58,6 +60,18 @@
                 </a>
             </li>
         </ul>
+        <form th:action="@{/logout}" method="post">
+            <input type="hidden"
+                   th:name="${_csrf.parameterName}"
+                   th:value="${_csrf.token}"/>
+
+            <button type="submit"
+                    class="flex items-center w-full py-2 px-4 rounded-md hover:bg-emerald-400 transition">
+                <img th:src="@{/images/log-out.svg}" alt="Ícone" class="mr-2">
+                <span>Sair</span>
+            </button>
+        </form>
+
     </nav>
 
     <!-- Conteúdo principal -->
