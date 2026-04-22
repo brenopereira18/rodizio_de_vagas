@@ -53,4 +53,5 @@ jobs:
                     -e REDIS_HOST=redis \
                     -e REDIS_PORT=6379 \
                     -e REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }} \
+                    -e APP_BASE_URL=${{ secrets.APP_BASE_URL }} \
                     ${{ secrets.DOCKER_USERNAME }}/rodizio_de_vagas:latest
