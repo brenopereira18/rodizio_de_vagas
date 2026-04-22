@@ -1,15 +1,25 @@
-FROM ubuntu:latest AS build
+FROM maven:3.9.9-eclipse-temurin-21 AS build
 
-RUN apt-get update
-RUN apt-get install openjdk-21-jdk -y
-COPY . .
+WORKDIR /app
 
-RUN apt-get install maven -y
-RUN mvn clean install -DskipTests
+# Copia só o pom primeiro (cache de dependências)
+COPY pom.xml .
 
+RUN mvn dependency:go-offline
+
+# Agora copia o resto do projeto
+COPY src ./src
+
+# Build da aplicação
+RUN mvn clean package -DskipTests
+
+# ===== RUNTIME STAGE =====
 FROM eclipse-temurin:21-jre-jammy
+
+WORKDIR /app
+
+COPY --from=build /app/target/*.jar app.jar
+
 EXPOSE 8080
 
-COPY --from=build target/rodizioDeVagas-0.0.1-SNAPSHOT.jar app.jar
-
-ENTRYPOINT [ "java", "-jar", "app.jar" ]
+ENTRYPOINT ["java", "-jar", "app.jar"]
