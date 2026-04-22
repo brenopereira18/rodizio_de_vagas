@@ -7,6 +7,7 @@ spring:
         cache: true
 
 app:
+    base-url: ${APP_BASE_URL}
     redis:
         stream:
             fiscal-events: fiscal-events
