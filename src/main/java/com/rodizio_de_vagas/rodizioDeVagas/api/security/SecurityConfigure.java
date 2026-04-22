@@ -55,12 +55,13 @@ public class SecurityConfigure {
                 .sessionFixation().migrateSession()
                 .maximumSessions(1)
             )
-            //.logout(logout -> logout
-              //  .logoutUrl("/logout")
-              //  .logoutSuccessUrl("/fiscal/login?logout=true")
-              //  .invalidateHttpSession(true)
-              //  .deleteCookies("JSESSIONID")
-            //)
+            .logout(logout -> logout
+                .logoutUrl("/logout")
+                .logoutSuccessUrl("/fiscal/login?logout=true")
+                .invalidateHttpSession(true)
+                .deleteCookies("JSESSIONID")
+                .clearAuthentication(true)
+                .permitAll())
             .addFilterBefore(securityFilter, UsernamePasswordAuthenticationFilter.class)
             .build();
     }
